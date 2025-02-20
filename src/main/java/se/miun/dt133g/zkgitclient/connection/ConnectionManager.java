@@ -31,7 +31,8 @@ public final class ConnectionManager {
     }
 
     public String sendPostRequest(final Map<String, String> postDataParams)
-    throws NullPointerException {
+        throws NullPointerException {
+        System.out.println("Sending POST Request to: " + domain + port);
         return this.httpsConnection.sendPostRequest(domain, port, postDataParams);
     }
 

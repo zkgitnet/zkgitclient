@@ -48,6 +48,9 @@
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
+          <filters>
+            <filter>src/assembly/filter.txt</filter>
+          </filters>
         </configuration>
       </plugin>
       <plugin>
@@ -64,7 +67,21 @@
                 <transformer>
                   <mainClass>se.miun.dt133g.zkgitclient.ZkGit</mainClass>
                 </transformer>
+                <transformer />
+                <transformer>
+                  <resource>META-INF/spring.handlers</resource>
+                </transformer>
               </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>

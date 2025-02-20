@@ -263,9 +263,9 @@ public final class AppConfig {
     public static final String STATUS_NOT_ADMIN = "This function requires admin privileges.";
 
     // Info messages & Input config
-    public static final String INFO_ENTER_ACCOUNT_NUMBER = "Enter account number (20 digits) or '0' to exit: ";
+    public static final String INFO_ENTER_ACCOUNT_NUMBER = "Enter account number (25 digits) or '0' to exit: ";
 
-    public static final String INFO_INVALID_ACCOUNT_NUMBER_INPUT = "Invalid account number. It must be exactly 20 digits.";
+    public static final String INFO_INVALID_ACCOUNT_NUMBER_INPUT = "Invalid account number. It must be exactly 25 digits.";
 
     public static final String INFO_ENTER_TOTP = "Enter 2FA Token (6 digits) or '0' to exit: ";
 
@@ -341,7 +341,7 @@ public final class AppConfig {
     public static final String ERROR_DECRYPTION = "Error decryption";
 
     // Regexes
-    public static final String REGEX_ACCOUNT_NUMBER = "\\d{20}";
+    public static final String REGEX_ACCOUNT_NUMBER = "\\d{25}";
 
     public static final String REGEX_USERNAME = "[a-zA-Z]{1,50}";
 

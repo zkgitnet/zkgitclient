@@ -59,9 +59,9 @@ public final class CommandManager extends BaseCommand {
 
             latestResponseMap = extractResponseToMap(response);
 
-            /*for (Map.Entry<String, String> entry : latestResponseMap.entrySet()) {
+            for (Map.Entry<String, String> entry : latestResponseMap.entrySet()) {
                 System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue());
-                }*/
+                }
 
             if (latestResponseMap.containsKey(AppConfig.COMMAND_SUCCESS) ||
                 (latestResponseMap.containsKey(AppConfig.ERROR_KEY)

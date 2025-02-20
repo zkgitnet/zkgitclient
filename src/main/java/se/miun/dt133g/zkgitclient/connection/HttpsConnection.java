@@ -84,6 +84,7 @@ public final class HttpsConnection {
                 return AppConfig.ERROR_KEY;
             }
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return AppConfig.ERROR_KEY
                 + " "
                 + AppConfig.ERROR_CONNECTION;
@@ -100,6 +101,7 @@ public final class HttpsConnection {
                                              + ":"
                                              + port
                                              + uriPath).openConnection();
+            System.out.println("https://" + domain + ":" + port + uriPath);
             connection.setRequestMethod(AppConfig.REQUEST_TYPE_POST);
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
@@ -108,7 +110,7 @@ public final class HttpsConnection {
             try (DataOutputStream wr =
                  new DataOutputStream(connection.getOutputStream())) {
                 String post = buildPostData(postDataParams);
-                //System.out.println(post);
+                System.out.println(post);
                 wr.writeBytes(post);
                 wr.flush();
             }
@@ -120,11 +122,13 @@ public final class HttpsConnection {
                     return in.lines().collect(Collectors.joining());
                 }
             } else {
+                System.out.println("sendPostRequest Error");
                 return "{" + AppConfig.ERROR_KEY
                     + "="
                     + AppConfig.ERROR_CONNECTION + "}";
             }
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return "{" + AppConfig.ERROR_KEY
                     + "="
                     + AppConfig.ERROR_CONNECTION + "}";
