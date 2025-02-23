@@ -44,7 +44,7 @@ public final class Utils {
     }
 
     public String formatWithSpace(String input) {
-        return input.replaceAll("(.{4})", "$1" + AppConfig.SPACE_SEPARATOR);
+        return input.replaceAll("(.{5})", "$1" + AppConfig.SPACE_SEPARATOR);
     }
 
     private byte[] hexToBytes(final String hex) {
