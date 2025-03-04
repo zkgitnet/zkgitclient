@@ -170,15 +170,15 @@ public final class AppConfig {
 
     public static final String DB_IPV6 = "ipv6";
 
-    public static final String DB_REPO_MAX_USERS = "max_users";
+    public static final String DB_REPO_MAX_USERS = "maxusers";
 
-    public static final String DB_REPO_TOTAL_USERS = "total_users";
+    public static final String DB_REPO_TOTAL_USERS = "totalusers";
 
-    public static final String DB_REPO_MAX_STORAGE = "max_storage";
+    public static final String DB_REPO_MAX_STORAGE = "maxstorage";
 
-    public static final String DB_REPO_TOTAL_SIZE = "total_size";
+    public static final String DB_REPO_TOTAL_SIZE = "totalsize";
 
-    public static final String DB_REPO_TOTAL_REPOS = "total_repos";
+    public static final String DB_REPO_TOTAL_REPOS = "totalrepos";
 
     public static final String DB_REPO_EXP_DATE = "expdate";
 
