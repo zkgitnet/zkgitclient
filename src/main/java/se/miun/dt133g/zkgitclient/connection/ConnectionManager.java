@@ -80,7 +80,6 @@ public final class ConnectionManager {
                     this.gitSocket = gitSocket.INSTANCE;
                     if (gitSocket.getGitPort() > 0) {
                         System.out.println(AppConfig.INFO_PORT_SET + input);
-                        port = input;
                         break;
                     } else {
                         System.out.println(AppConfig.ERROR_PORT_NOT_FREE);
