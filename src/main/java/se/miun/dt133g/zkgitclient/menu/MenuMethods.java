@@ -208,6 +208,12 @@ public abstract class MenuMethods {
 
         Map<String, String> userList =
             CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_REQUEST_USER_LIST);
+
+        System.out.println("Received users list:");
+        for (Map.Entry<String, String> entry : userList.entrySet()) {
+            System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue());
+        }
+        
         if (userList.containsKey(AppConfig.ERROR_KEY)) {
             System.out.println(AppConfig.STATUS_NOT_ADMIN);
             return;
@@ -225,6 +231,7 @@ public abstract class MenuMethods {
 
         final int[] index = {1};
         userList.entrySet().stream()
+            .filter(entry -> !entry.getKey().equals(AppConfig.COMMAND_SUCCESS))
             .forEach(entry -> {
                     String role =
                         entry.getValue().substring(0, 1).toUpperCase()
@@ -232,7 +239,7 @@ public abstract class MenuMethods {
                     System.out.printf(format,
                                       index[0]++,
                                       entry.getKey(),
-                                      role);
+                                      role.equals("True") ? "Admin" : "User");
                 });
     }
 

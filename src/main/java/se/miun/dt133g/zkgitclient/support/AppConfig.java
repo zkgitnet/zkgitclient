@@ -124,7 +124,7 @@ public final class AppConfig {
     public static final String REPO_SIGNATURE = "repohash";
 
     // User Credentials Name
-    public static final String CREDENTIAL_ACCOUNT_NR = "accountNr";
+    public static final String CREDENTIAL_ACCOUNT_NR = "accountnr";
 
     public static final String CREDENTIAL_TOTP_TOKEN = "totpToken";
 
