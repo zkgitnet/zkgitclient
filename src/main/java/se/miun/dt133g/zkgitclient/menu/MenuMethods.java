@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Comparator;
 
 public abstract class MenuMethods {
 
@@ -232,14 +233,13 @@ public abstract class MenuMethods {
         final int[] index = {1};
         userList.entrySet().stream()
             .filter(entry -> !entry.getKey().equals(AppConfig.COMMAND_SUCCESS))
+            .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Integer::parseInt)))
             .forEach(entry -> {
-                    String role =
-                        entry.getValue().substring(0, 1).toUpperCase()
-                        + entry.getValue().substring(1).toLowerCase();
+                    String[] entryData = entry.getValue().split(AppConfig.SEMICOLON_SEPARATOR);
                     System.out.printf(format,
                                       index[0]++,
-                                      entry.getKey(),
-                                      role.equals("True") ? "Admin" : "User");
+                                      entryData[0],
+                                      entryData[1].equals("true") ? "Admin" : "User");
                 });
     }
 
@@ -274,22 +274,19 @@ public abstract class MenuMethods {
                           MenuItems.TITLE_LAST_PUSH);
         System.out.println(MenuItems.TITLE_SEPARATOR);
 
-        int[] index = {1};
-        repoList.forEach((key, value) -> {
-                aesHandler.setInput(utils.hexToBase64(key));
-                aesHandler.decrypt();
-                String[] repoValues =
-                    value.split(AppConfig.SEMICOLON_SEPARATOR);
-                System.out.printf(format,
-                                  index[0]++,
-                                  aesHandler.getOutput().replace(AppConfig.ZIP_SUFFIX,
-                                                                 AppConfig.NONE),
-                                  convertBytesToMb(repoValues[0]),
-                                  repoValues[2]
-                                  + AppConfig.SPACE_SEPARATOR
-                                  + AppConfig.FORWARD_BRACKET
-                                  + repoValues[1]
-                                  + AppConfig.BACKWARD_BRACKET);
-            });
+        repoList.entrySet().stream()
+            .filter(entry -> !entry.getKey().equals(AppConfig.COMMAND_SUCCESS))
+            .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Integer::parseInt)))
+            .forEach(entry -> {
+                    String[] repoValues = entry.getValue().split(AppConfig.SEMICOLON_SEPARATOR);
+                    aesHandler.setInput(repoValues[0]);
+                    aesHandler.decrypt();
+                    System.out.printf(format,
+                                      entry.getKey(),
+                                      aesHandler.getOutput().replace(AppConfig.ZIP_SUFFIX, AppConfig.NONE),
+                                      convertBytesToMb(repoValues[1]),
+                                      repoValues[3] + AppConfig.SPACE_SEPARATOR + AppConfig.FORWARD_BRACKET
+                                      + repoValues[2] + AppConfig.BACKWARD_BRACKET);
+                });
     }
 }

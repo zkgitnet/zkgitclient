@@ -255,7 +255,7 @@ public final class MenuItems {
 
     public static final String TITLE_SIZE = "Size (MB)";
 
-    public static final String TITLE_LAST_PUSH = "Last Push";
+    public static final String TITLE_LAST_PUSH = "Last Committer (Owner)";
 
     public static final String TITLE_SEPARATOR = "---";
 
