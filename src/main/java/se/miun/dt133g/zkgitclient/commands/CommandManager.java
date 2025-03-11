@@ -17,6 +17,7 @@ import se.miun.dt133g.zkgitclient.commands.account.RequestRepoList;
 import se.miun.dt133g.zkgitclient.commands.account.RequestNewUser;
 import se.miun.dt133g.zkgitclient.commands.account.RequestUserDeletion;
 import se.miun.dt133g.zkgitclient.commands.account.RequestUserPrivChange;
+import se.miun.dt133g.zkgitclient.commands.account.RequestRepoDeletion;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.util.HashMap;
@@ -45,6 +46,7 @@ public final class CommandManager extends BaseCommand {
         commandMap.put(AppConfig.COMMAND_GENERATE_USER, new RequestNewUser());
         commandMap.put(AppConfig.COMMAND_REQUEST_USER_DELETE, new RequestUserDeletion());
         commandMap.put(AppConfig.COMMAND_REQUEST_USER_PRIV_CHANGE, new RequestUserPrivChange());
+        commandMap.put(AppConfig.COMMAND_REQUEST_REPO_DELETE, new RequestRepoDeletion());
     }
 
     public Map<String, String> executeCommand(final String commandName) {

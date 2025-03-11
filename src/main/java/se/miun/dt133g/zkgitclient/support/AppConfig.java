@@ -107,6 +107,8 @@ public final class AppConfig {
 
     public static final String COMMAND_REQUEST_USER_PRIV_CHANGE = "USER_PRIV_CHANGE";
 
+    public static final String COMMAND_REQUEST_REPO_DELETE = "DELETE_REPO";
+
 
     // Repo transfer
     public static final String ENC_FILE_NAME = "ENC_FILE_NAME";
@@ -273,11 +275,15 @@ public final class AppConfig {
 
     public static final String INFO_ENTER_USERNAME = "Enter username or '0' to exit: ";
 
+    public static final String INFO_ENTER_REPONAME = "Enter reponame or '0' to exit: ";
+
     public static final String INFO_ENTER_PORT_NUMBER = "Enter the port number (0 to exit): ";
 
     public static final String INFO_INVALID_PORT_NUMBER = "Invalid port number. Please enter a number between 1 and 65535.";
 
     public static final String INFO_INVALID_USERNAME = "Invalid username. It cannot be empty or longer than 50 characters. Usernames consists of only characters.";
+
+    public static final String INFO_INVALID_REPONAME = "Invalid reponame. It cannot be empty or longer than 250 characters. Reponames consists of only characters and digits.";
 
     public static final String INFO_ENTER_PASSWORD = "Enter password or '0' to exit: ";
 
@@ -344,6 +350,8 @@ public final class AppConfig {
     public static final String REGEX_ACCOUNT_NUMBER = "\\d{25}";
 
     public static final String REGEX_USERNAME = "[a-zA-Z]{1,50}";
+
+    public static final String REGEX_REPONAME = "[a-zA-Z0-9]{1,250}";
 
     public static final String REGEX_TOTP = "\\d{6}";
 

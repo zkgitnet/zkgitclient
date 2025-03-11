@@ -39,7 +39,7 @@ public class MainMenu extends MenuMethods {
         case MenuItems.CHOICE_ELEVEN -> System.out.println("test");
         case MenuItems.CHOICE_TWELVE -> System.out.println("test");
         case MenuItems.CHOICE_THIRTEEN -> getRepoList();
-        case MenuItems.CHOICE_FOURTEEN -> System.out.println("test");
+        case MenuItems.CHOICE_FOURTEEN -> handleUserCommands(choice);
         case MenuItems.CHOICE_FIFTEEN -> exportEncryptionKeys();
         case MenuItems.CHOICE_ZERO -> System.out.println(MenuItems.STATUS_BACKGROUND);
         case MenuItems.CHOICE_E -> exitApplication();
@@ -62,6 +62,8 @@ public class MainMenu extends MenuMethods {
             displayStatus();
         } else if (choice.equals(MenuItems.CHOICE_NINE)) {
             CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_CHANGE_PASSWORD);
+        } else if (choice.equals(MenuItems.CHOICE_FOURTEEN)) {
+            CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_REQUEST_REPO_DELETE);
         }
     }
 
