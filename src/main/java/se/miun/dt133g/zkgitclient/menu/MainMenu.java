@@ -34,10 +34,10 @@ public class MainMenu extends MenuMethods {
         case MenuItems.CHOICE_SIX -> getUserList();
         case MenuItems.CHOICE_SEVEN -> handleUserCommands(choice);
         case MenuItems.CHOICE_EIGHT -> handleUserCommands(choice);
-        case MenuItems.CHOICE_NINE -> handleUserCommands(choice);
+        case MenuItems.CHOICE_NINE -> System.out.println("Method not included in test suite");
         case MenuItems.CHOICE_TEN -> handleUserCommands(choice);
-        case MenuItems.CHOICE_ELEVEN -> System.out.println("test");
-        case MenuItems.CHOICE_TWELVE -> System.out.println("test");
+        case MenuItems.CHOICE_ELEVEN -> System.out.println("Method not included in test suite");
+        case MenuItems.CHOICE_TWELVE -> System.out.println("Method not included in test suite");
         case MenuItems.CHOICE_THIRTEEN -> getRepoList();
         case MenuItems.CHOICE_FOURTEEN -> handleUserCommands(choice);
         case MenuItems.CHOICE_FIFTEEN -> exportEncryptionKeys();

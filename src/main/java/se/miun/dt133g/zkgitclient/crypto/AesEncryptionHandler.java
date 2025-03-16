@@ -6,6 +6,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.Cipher;
 import java.util.Base64;
+import java.util.Arrays;
 
 public final class AesEncryptionHandler implements EncryptionHandler {
 
@@ -44,7 +45,6 @@ public final class AesEncryptionHandler implements EncryptionHandler {
                         new GCMParameterSpec(AppConfig.CRYPTO_AES_TAG_LENGTH, iv));
             this.output = new String(cipher.doFinal(Base64.getDecoder().decode(input)));
         } catch (Exception e) {
-            e.printStackTrace();
             this.output = e.getMessage();
         }
     }

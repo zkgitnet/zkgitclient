@@ -12,9 +12,11 @@ import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Comparator;
+import java.util.stream.Collectors;
 
 public abstract class MenuMethods {
 
@@ -235,11 +237,15 @@ public abstract class MenuMethods {
             .filter(entry -> !entry.getKey().equals(AppConfig.COMMAND_SUCCESS))
             .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Integer::parseInt)))
             .forEach(entry -> {
-                    String[] entryData = entry.getValue().split(AppConfig.SEMICOLON_SEPARATOR);
-                    System.out.printf(format,
-                                      index[0]++,
-                                      entryData[0],
-                                      entryData[1].equals("true") ? "Admin" : "User");
+                    try {
+                        String[] entryData = entry.getValue().split(AppConfig.UNDERSCORE);
+                        System.out.printf(format,
+                                          index[0]++,
+                                          entryData[0],
+                                          entryData[1].equals("true") ? "Admin" : "User");
+                    } catch (IndexOutOfBoundsException e) {
+                        System.out.println(e.getMessage());
+                    }
                 });
     }
 
@@ -257,7 +263,6 @@ public abstract class MenuMethods {
         EncryptionHandler aesHandler =
             EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_AES);
         aesHandler.setAesKey(credentials.getAesKey());
-        aesHandler.setIv(credentials.getIv());
 
         Map<String, String> repoList =
             CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_REQUEST_REPO_LIST);
@@ -278,15 +283,26 @@ public abstract class MenuMethods {
             .filter(entry -> !entry.getKey().equals(AppConfig.COMMAND_SUCCESS))
             .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Integer::parseInt)))
             .forEach(entry -> {
-                    String[] repoValues = entry.getValue().split(AppConfig.SEMICOLON_SEPARATOR);
+                    String[] repoValues = entry.getValue().split(AppConfig.UNDERSCORE);
                     aesHandler.setInput(repoValues[0]);
-                    aesHandler.decrypt();
-                    System.out.printf(format,
-                                      entry.getKey(),
-                                      aesHandler.getOutput().replace(AppConfig.ZIP_SUFFIX, AppConfig.NONE),
-                                      convertBytesToMb(repoValues[1]),
-                                      repoValues[3] + AppConfig.SPACE_SEPARATOR + AppConfig.FORWARD_BRACKET
-                                      + repoValues[2] + AppConfig.BACKWARD_BRACKET);
+                    String input = repoValues[4].replaceAll("[\\[\\] ]", "");
+                    String[] byteStrings = input.split(";");
+                    byte[] byteArray = new byte[byteStrings.length];
+                    try {
+                        for (int i = 0; i < byteStrings.length; i++) {
+                            byteArray[i] = Byte.parseByte(byteStrings[i]);
+                        }
+                        aesHandler.setIv(byteArray);
+                        aesHandler.decrypt();
+                        System.out.printf(format,
+                                          entry.getKey(),
+                                          aesHandler.getOutput().replace(AppConfig.ZIP_SUFFIX, AppConfig.NONE),
+                                          convertBytesToMb(repoValues[1]),
+                                          repoValues[3] + AppConfig.SPACE_SEPARATOR + AppConfig.FORWARD_BRACKET
+                                          + repoValues[2] + AppConfig.BACKWARD_BRACKET);
+                    } catch (NumberFormatException e) {
+                        System.out.println(e.getMessage());
+                    }
                 });
     }
 }
