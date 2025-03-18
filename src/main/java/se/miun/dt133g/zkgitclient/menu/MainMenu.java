@@ -2,6 +2,7 @@ package se.miun.dt133g.zkgitclient.menu;
 
 import se.miun.dt133g.zkgitclient.connection.ConnectionManager;
 import se.miun.dt133g.zkgitclient.commands.CommandManager;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 import se.miun.dt133g.zkgitclient.support.MenuItems;
 import se.miun.dt133g.zkgitclient.support.FileUtils;
@@ -10,10 +11,12 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.List;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 public class MainMenu extends MenuMethods {
 
     public static final MainMenu INSTANCE = new MainMenu();
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     private boolean connected = false;
     private boolean socket = false;

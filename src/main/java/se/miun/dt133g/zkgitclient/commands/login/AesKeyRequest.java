@@ -1,12 +1,16 @@
 package se.miun.dt133g.zkgitclient.commands.login;
 
 import se.miun.dt133g.zkgitclient.commands.Command;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 public final class AesKeyRequest extends BaseCommandLogin implements Command {
+
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     @Override public String execute() {
         Map<String, String> postData = new HashMap<>();

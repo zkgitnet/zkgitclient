@@ -1,6 +1,7 @@
 package se.miun.dt133g.zkgitclient.crypto;
 
 import se.miun.dt133g.zkgitclient.user.UserCredentials;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import javax.crypto.SecretKeyFactory;
@@ -9,9 +10,11 @@ import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.logging.Logger;
 
 public final class Pbkdf2KeyGenerator implements EncryptionHandler {
 
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private static Pbkdf2KeyGenerator INSTANCE;
     private UserCredentials credentials = UserCredentials.getInstance();
 

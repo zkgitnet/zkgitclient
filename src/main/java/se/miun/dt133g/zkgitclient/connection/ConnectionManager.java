@@ -1,14 +1,17 @@
 package se.miun.dt133g.zkgitclient.connection;
 
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.io.File;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 public final class ConnectionManager {
 
     public static final ConnectionManager INSTANCE = new ConnectionManager();
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private CheckConnection checkConnection;
     private HttpsConnection httpsConnection;
     private GitSocket gitSocket;

@@ -10,6 +10,7 @@ import se.miun.dt133g.zkgitclient.commands.login.DecryptAesKey;
 import se.miun.dt133g.zkgitclient.commands.login.GetLoginStatus;
 import se.miun.dt133g.zkgitclient.commands.git.SendRepoFile;
 import se.miun.dt133g.zkgitclient.commands.git.GetRepoFile;
+import se.miun.dt133g.zkgitclient.commands.git.GetRepoFileInfo;
 import se.miun.dt133g.zkgitclient.commands.files.CleanTmpFiles;
 import se.miun.dt133g.zkgitclient.commands.account.RequestAccountData;
 import se.miun.dt133g.zkgitclient.commands.account.RequestUserList;
@@ -18,15 +19,18 @@ import se.miun.dt133g.zkgitclient.commands.account.RequestNewUser;
 import se.miun.dt133g.zkgitclient.commands.account.RequestUserDeletion;
 import se.miun.dt133g.zkgitclient.commands.account.RequestUserPrivChange;
 import se.miun.dt133g.zkgitclient.commands.account.RequestRepoDeletion;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public final class CommandManager extends BaseCommand {
 
     public static final CommandManager INSTANCE = new CommandManager();
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private final Map<String, Command> commandMap = new HashMap<>();
 
     private CommandManager() {
@@ -53,6 +57,8 @@ public final class CommandManager extends BaseCommand {
         Command command = commandMap.get(commandName);
         Map<String, String> latestResponseMap = new HashMap<>();
 
+        System.out.println("Executing command: " + commandName);
+
         while (command != null) {
             String response = command.execute();
             if (AppConfig.COMMAND_EXIT.equals(response)) {
@@ -62,8 +68,14 @@ public final class CommandManager extends BaseCommand {
             latestResponseMap = extractResponseToMap(response);
 
             for (Map.Entry<String, String> entry : latestResponseMap.entrySet()) {
-                System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue());
+                if (latestResponseMap.containsKey(AppConfig.ERROR_KEY)) {
+                    LOGGER.warning("Key: " + entry.getKey() + ", Value: " + entry.getValue());
+                } else if (latestResponseMap.containsKey(AppConfig.COMMAND_SUCCESS)) {
+                    LOGGER.fine("Key: " + entry.getKey() + ", Value: " + entry.getValue());
+                } else {
+                    LOGGER.finest("Key: " + entry.getKey() + ", Value: " + entry.getValue());
                 }
+            }
 
             if (latestResponseMap.containsKey(AppConfig.COMMAND_SUCCESS) ||
                 (latestResponseMap.containsKey(AppConfig.ERROR_KEY)

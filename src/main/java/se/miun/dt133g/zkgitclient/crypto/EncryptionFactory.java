@@ -1,12 +1,16 @@
 package se.miun.dt133g.zkgitclient.crypto;
 
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.function.Supplier;
 
 public final class EncryptionFactory {
+
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     private EncryptionFactory() { }
 

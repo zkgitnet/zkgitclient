@@ -1,6 +1,7 @@
 package se.miun.dt133g.zkgitclient.crypto;
 
 import se.miun.dt133g.zkgitclient.user.CurrentUserRepo;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import javax.crypto.Cipher;
@@ -14,10 +15,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.FileNotFoundException;
+import java.util.logging.Logger;
 
 public final class AesFileEncryptionHandler implements EncryptionHandler {
 
     private static AesFileEncryptionHandler INSTANCE;
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     private CurrentUserRepo currentRepo = CurrentUserRepo.getInstance();
     private String tmpDir = System.getProperty(AppConfig.JAVA_TMP);

@@ -4,6 +4,7 @@ import se.miun.dt133g.zkgitclient.commands.BaseCommand;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionHandler;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionFactory;
 import se.miun.dt133g.zkgitclient.menu.MenuTerminal;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import org.jline.reader.LineReader;
@@ -14,15 +15,15 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.InfoCmp.Capability;
 
-import java.util.Optional;
-import java.util.regex.Pattern;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.Arrays;
+import java.util.logging.Logger;
 
 public abstract class BaseCommandLogin extends BaseCommand {
 
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     protected EncryptionHandler pbkdf2Handler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_PBKDF2);
     protected EncryptionHandler aesHandler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_AES);
     protected EncryptionHandler rsaHandler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA);

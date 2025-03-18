@@ -1,12 +1,16 @@
 package se.miun.dt133g.zkgitclient.support;
 
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
+
 import java.util.Base64;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class Utils {
 
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private static Utils INSTANCE;
 
     private Utils() { }
@@ -55,6 +59,18 @@ public final class Utils {
                                   + Character.digit(hex.charAt(i + 1), 16));
         }
         return data;
+    }
+
+    public byte[] ivArrayToByteArray(final String ivArray) throws NumberFormatException {
+        String input = ivArray.replaceAll("[\\[\\] ]", "");
+        String[] byteStrings = input.split(";");
+        byte[] byteArray = new byte[byteStrings.length];
+        
+        for (int i = 0; i < byteStrings.length; i++) {
+            byteArray[i] = Byte.parseByte(byteStrings[i]);
+        }
+
+        return byteArray;
     }
 
     public byte[] intArrayToByteArray(final int[] intArray) {

@@ -3,6 +3,7 @@ package se.miun.dt133g.zkgitclient.commands.git;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionHandler;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionFactory;
 import se.miun.dt133g.zkgitclient.commands.Command;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.io.File;
@@ -10,9 +11,11 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public final class SendRepoFile extends BaseCommandGit implements Command {
 
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private EncryptionHandler sha256FileHandler =
         EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_SHA_256_FILE);
 

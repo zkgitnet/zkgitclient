@@ -1,5 +1,6 @@
 package se.miun.dt133g.zkgitclient.user;
 
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import org.json.JSONArray;
@@ -7,10 +8,12 @@ import org.json.JSONObject;
 
 import java.util.Base64;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 public final class UserCredentials {
 
     private static UserCredentials INSTANCE;
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     private String accountNumber;
     private String totpToken;

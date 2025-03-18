@@ -2,6 +2,7 @@ package se.miun.dt133g.zkgitclient.support;
 
 import se.miun.dt133g.zkgitclient.user.UserCredentials;
 import se.miun.dt133g.zkgitclient.user.CurrentUserRepo;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 
 import java.io.RandomAccessFile;
 import java.io.IOException;
@@ -13,11 +14,13 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.IntStream;
+import java.util.logging.Logger;
 
 public final class FileUtils {
 
     private static FileUtils INSTANCE;
 
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private UserCredentials credentials = UserCredentials.getInstance();
     private CurrentUserRepo currentRepo = CurrentUserRepo.getInstance();
 

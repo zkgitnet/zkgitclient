@@ -1,5 +1,6 @@
 package se.miun.dt133g.zkgitclient.crypto;
 
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import com.nimbusds.jose.jwk.RSAKey;
@@ -17,9 +18,11 @@ import java.security.Security;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.SecureRandom;
+import java.util.logging.Logger;
 
 public final class GenerateEncryptionKeys {
 
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private KeyPair keyPair;
 
     static {

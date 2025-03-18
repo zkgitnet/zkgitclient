@@ -1,5 +1,6 @@
 package se.miun.dt133g.zkgitclient.connection;
 
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.io.IOException;
@@ -7,9 +8,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.logging.Logger;
 
 public final class CheckConnection {
 
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private String domain = AppConfig.API_DOMAIN;
     private boolean serverConnectivity = false;
     private boolean ipv6Connectivity = false;

@@ -1,5 +1,6 @@
 package se.miun.dt133g.zkgitclient.crypto;
 
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -7,10 +8,12 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.Cipher;
 import java.util.Base64;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 public final class AesEncryptionHandler implements EncryptionHandler {
 
     private static AesEncryptionHandler INSTANCE;
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     private String input;
     private String output;

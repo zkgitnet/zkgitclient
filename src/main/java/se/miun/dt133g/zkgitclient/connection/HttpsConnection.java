@@ -4,6 +4,7 @@ import se.miun.dt133g.zkgitclient.crypto.EncryptionHandler;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionFactory;
 import se.miun.dt133g.zkgitclient.user.UserCredentials;
 import se.miun.dt133g.zkgitclient.user.CurrentUserRepo;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.io.BufferedReader;
@@ -23,6 +24,7 @@ import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -33,13 +35,12 @@ import javax.net.ssl.HostnameVerifier;
 public final class HttpsConnection {
 
     private EncryptionHandler rsaSignHandler =
-        EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
+EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
     private EncryptionHandler sha256Handler =
         EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_SHA_256);
-    private UserCredentials credentials =
-        UserCredentials.getInstance();
-    private CurrentUserRepo currentRepo =
-        CurrentUserRepo.getInstance();
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
+    private UserCredentials credentials = UserCredentials.getInstance();
+    private CurrentUserRepo currentRepo = CurrentUserRepo.getInstance();
     private String uriPath = AppConfig.URI_PATH;
     
     protected String sendGetPostRequest(final String domain,
@@ -101,7 +102,7 @@ public final class HttpsConnection {
                                              + ":"
                                              + port
                                              + uriPath).openConnection();
-            System.out.println("https://" + domain + ":" + port + uriPath);
+            LOGGER.config("https://" + domain + ":" + port + uriPath);
             connection.setRequestMethod(AppConfig.REQUEST_TYPE_POST);
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
@@ -110,7 +111,7 @@ public final class HttpsConnection {
             try (DataOutputStream wr =
                  new DataOutputStream(connection.getOutputStream())) {
                 String post = buildPostData(postDataParams);
-                System.out.println(post);
+                LOGGER.finer(post);
                 wr.writeBytes(post);
                 wr.flush();
             }
@@ -122,10 +123,10 @@ public final class HttpsConnection {
                     return in.lines().collect(Collectors.joining());
                 }
             } else {
-                System.out.println("sendPostRequest Error");
+                LOGGER.severe("sendPostRequest Error");
                 return "{" + AppConfig.ERROR_KEY
                     + "="
-                    + AppConfig.ERROR_CONNECTION + "}";
+                    + connection.getResponseCode() + "}";
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());

@@ -1,5 +1,6 @@
 package se.miun.dt133g.zkgitclient.crypto;
 
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,10 +18,12 @@ import java.security.spec.RSAPrivateCrtKeySpec;
 import java.math.BigInteger;
 import java.util.Base64;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public final class RsaEncryptionHandler implements EncryptionHandler {
 
     private static RsaEncryptionHandler INSTANCE;
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     private String input;
     private String output;

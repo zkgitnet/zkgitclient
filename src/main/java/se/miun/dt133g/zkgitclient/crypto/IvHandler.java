@@ -4,17 +4,14 @@ import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.Utils;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.logging.Logger;
+import java.security.SecureRandom;
 
-public final class Sha256HashFileHandler implements EncryptionHandler {
+public final class IvHandler implements EncryptionHandler {
 
-    private static Sha256HashFileHandler INSTANCE;
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
+    private static IvHandler INSTANCE;
     private Utils utils = Utils.getInstance();
 
     private String input;
@@ -23,32 +20,23 @@ public final class Sha256HashFileHandler implements EncryptionHandler {
     private byte[] aesKey;
     private byte[] iv;
 
-    private Sha256HashFileHandler() { }
+    private IvHandler() { }
 
-    public static Sha256HashFileHandler getInstance() {
+    public static IvHandler getInstance() {
         if (INSTANCE == null) {
-            INSTANCE = new Sha256HashFileHandler();
+            INSTANCE = new IvHandler();
         }
         return INSTANCE;
     }
 
     @Override public void encrypt() {
-        output = generateSha256HexString(input);
+        this.iv = new byte[12];
+        SecureRandom secureRandom = new SecureRandom();
+        secureRandom.nextBytes(this.iv);
+        output = Arrays.toString(this.iv).replace(" ", "");
     }
 
     @Override public void decrypt() { }
-
-    private String generateSha256HexString(final String input) {
-        try {
-            File file = new File(input);
-            byte[] fileBytes = Files.readAllBytes(file.toPath());  // Read the file bytes
-            MessageDigest md = MessageDigest.getInstance(AppConfig.CRYPTO_SHA_256);
-            byte[] digest = md.digest(fileBytes);  // Compute the SHA-256 hash of the file content
-            return utils.bytesToHex(digest);
-        } catch (NoSuchAlgorithmException | IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Override public void setInput(final String input) {
         this.input = input;

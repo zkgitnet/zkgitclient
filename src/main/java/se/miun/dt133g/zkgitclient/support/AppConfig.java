@@ -1,10 +1,15 @@
 package se.miun.dt133g.zkgitclient.support;
 
+import java.util.logging.Level;
+
 public final class AppConfig {
 
     private AppConfig() {
         throw new IllegalStateException("Utility class");
     }
+
+    // Logger configuration
+    public static final Level LOG_LEVEL = Level.ALL;
 
     // Server & connection configuration
     public static final String DOMAIN_PREFIX = "https://";
@@ -89,6 +94,8 @@ public final class AppConfig {
 
     public static final String COMMAND_REQUEST_REPO_FILE = "REQUEST";
 
+    public static final String COMMAND_REQUEST_REPO_INFO = "REQUEST_INFO";
+
     public static final String COMMAND_TRANSFER_REPO = "TRANSFER_REPO";
 
     public static final String COMMAND_REQUEST_ACCOUNT_DATA = "ACCOUNT_DATA";
@@ -113,6 +120,8 @@ public final class AppConfig {
     // Repo transfer
     public static final String ENC_FILE_NAME = "ENC_FILE_NAME";
 
+    public static final String REPO_NAME_HASH = "REPO_NAME_HASH";
+
     public static final String NUM_CHUNKS = "NUM_CHUNKS";
 
     public static final int CHUNK_SIZE = 1048576; // 1 MB = 1024 * 1024 KB
@@ -123,7 +132,7 @@ public final class AppConfig {
 
     public static final String FILE_SHA256_HASH= "fileHash";
 
-    public static final String REPO_SIGNATURE = "repohash";
+    public static final String REPO_SIGNATURE = "commithash";
 
     // User Credentials Name
     public static final String CREDENTIAL_ACCOUNT_NR = "accountnr";

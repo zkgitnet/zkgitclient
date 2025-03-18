@@ -2,13 +2,21 @@ package se.miun.dt133g.zkgitclient;
  
 import se.miun.dt133g.zkgitclient.menu.MainMenu;
 import se.miun.dt133g.zkgitclient.menu.MenuTerminal;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.MenuItems;
 
 import org.jline.reader.UserInterruptException;
+
+import java.util.logging.Logger;
  
 public final class ZkGit {
+
+    private final static Logger LOGGER = ZkGitLogger.getLogger(ZkGit.class);
  
     public static void main(final String[] args) {
+
+        LOGGER.info("Starting ZK Git Client...");
+        
         try {
             MainMenu.INSTANCE.displayHeader();
             MainMenu.INSTANCE.displayStatus();
@@ -26,7 +34,7 @@ public final class ZkGit {
                 MainMenu.INSTANCE.performAction(choice);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.getMessage());
         }
     }
 }

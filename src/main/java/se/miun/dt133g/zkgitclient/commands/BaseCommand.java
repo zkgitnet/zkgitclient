@@ -6,8 +6,16 @@ import se.miun.dt133g.zkgitclient.crypto.EncryptionFactory;
 import se.miun.dt133g.zkgitclient.menu.MenuTerminal;
 import se.miun.dt133g.zkgitclient.user.UserCredentials;
 import se.miun.dt133g.zkgitclient.user.CurrentUserRepo;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.Utils;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
+
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
+import org.jline.reader.EndOfFileException;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
 import java.io.File;
@@ -16,16 +24,12 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.reader.UserInterruptException;
-import org.jline.reader.EndOfFileException;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
+
 
 public abstract class BaseCommand {
 
@@ -35,6 +39,7 @@ public abstract class BaseCommand {
     protected final Utils utils = Utils.getInstance();
     protected final ConnectionManager conn = ConnectionManager.INSTANCE;
     private final Scanner scanner = new Scanner(System.in);
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     protected String prepareAndSendPostRequest(final Map<String, String> postData) {
          return conn.sendPostRequest(postData);
@@ -85,20 +90,21 @@ public abstract class BaseCommand {
     }
 
     protected void extractUserCredentials(final Map<String, String> commandArguments) {
-        Map<String, Consumer<String>> setters = Map.of(
-                                                        AppConfig.CREDENTIAL_ENC_ACCESS_TOKEN,
-                                                        credentials::setEncAccessToken,
-                                                        AppConfig.CREDENTIAL_ENC_PRIV_RSA_KEY,
-                                                        credentials::setEncPrivRsaJson,
-                                                        AppConfig.CREDENTIAL_ENC_AES_KEY,
-                                                        credentials::setEncAesKey,
-                                                        AppConfig.CREDENTIAL_USERNAME,
-                                                        credentials::setUsername
-                                                        );
+        Map<String, Consumer<String>> setters = Map.of(AppConfig.CREDENTIAL_ENC_ACCESS_TOKEN,
+                                                       credentials::setEncAccessToken,
+                                                       AppConfig.CREDENTIAL_ENC_PRIV_RSA_KEY,
+                                                       credentials::setEncPrivRsaJson,
+                                                       AppConfig.CREDENTIAL_ENC_AES_KEY,
+                                                       credentials::setEncAesKey,
+                                                       AppConfig.CREDENTIAL_USERNAME,
+                                                       credentials::setUsername,
+                                                       AppConfig.DB_IV,
+                                                       currentRepo::setIv,
+                                                       AppConfig.REPO_SIGNATURE,
+                                                       currentRepo::setRepoSignature);
 
          setters.forEach((key, setter) ->
-                         Optional.ofNullable(commandArguments.get(key)).ifPresent(setter)
-                        );
+                         Optional.ofNullable(commandArguments.get(key)).ifPresent(setter));
 
          Optional.ofNullable(commandArguments.get(AppConfig.DB_IPV4))
              .ifPresent(ipv4 -> ConnectionManager.INSTANCE.setIP(ipv4, commandArguments.get(AppConfig.DB_IPV6)));
@@ -124,5 +130,4 @@ public abstract class BaseCommand {
             .filter(entry -> entry != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
-
 }

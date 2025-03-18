@@ -1,14 +1,17 @@
 package se.miun.dt133g.zkgitclient.crypto;
 
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.Utils;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Logger;
 
 public final class Sha256HashHandler implements EncryptionHandler {
 
     private static Sha256HashHandler INSTANCE;
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private Utils utils = Utils.getInstance();
 
     private String input;

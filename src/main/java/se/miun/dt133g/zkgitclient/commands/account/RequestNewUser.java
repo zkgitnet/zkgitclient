@@ -5,19 +5,23 @@ import se.miun.dt133g.zkgitclient.commands.login.BaseCommandLogin;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionHandler;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionFactory;
 import se.miun.dt133g.zkgitclient.crypto.GenerateEncryptionKeys;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 import se.miun.dt133g.zkgitclient.support.Utils;
 
 import org.json.JSONObject;
+
 import java.util.Base64;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.nio.charset.StandardCharsets;
 
 public final class RequestNewUser extends BaseCommandAccount implements Command {
 
     private GenerateEncryptionKeys genEncKeys = new GenerateEncryptionKeys();
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private Utils utils = Utils.getInstance();
     private EncryptionHandler pbkdf2Handler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_PBKDF2);
     private EncryptionHandler aesHandler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_AES);

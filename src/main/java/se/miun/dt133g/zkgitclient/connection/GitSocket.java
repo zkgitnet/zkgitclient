@@ -2,6 +2,7 @@ package se.miun.dt133g.zkgitclient.connection;
 
 import se.miun.dt133g.zkgitclient.commands.CommandManager;
 import se.miun.dt133g.zkgitclient.user.CurrentUserRepo;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.io.BufferedReader;
@@ -11,23 +12,26 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 public final class GitSocket {
 
     public static GitSocket INSTANCE = new GitSocket();
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
+    private final String ERROR_MESSAGE = AppConfig.ERROR_KEY
+        + AppConfig.COLON_SEPARATOR + AppConfig.SPACE_SEPARATOR;
 
     private int port;
     private ServerSocket serverSocket;
     private Thread serverThread;
 
     private GitSocket() {
-        this.port = AppConfig.GIT_PORT;
-        serverThread = new Thread(this::startServer);
-        serverThread.start();
+        this(AppConfig.GIT_PORT);
     }
 
     private GitSocket(final int port) {
         this.port = port;
+        LOGGER.config("Setting Git Port: " + port);
         serverThread = new Thread(this::startServer);
         serverThread.start();
     }
@@ -35,6 +39,7 @@ public final class GitSocket {
     private void startServer() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             this.serverSocket = serverSocket;
+            LOGGER.info("Starting Git Server...");
 
             while (!serverThread.isInterrupted()) {
                 try {
@@ -46,20 +51,12 @@ public final class GitSocket {
                         break;
                     }
                     this.port = 0;
-                    System.out.println(AppConfig.ERROR_KEY
-                                       + AppConfig.COLON_SEPARATOR
-                                       + AppConfig.SPACE_SEPARATOR
-                                       + AppConfig.ERROR_SOCKET_INTERRUPT
-                                       );
+                    LOGGER.severe(AppConfig.ERROR_SOCKET_INTERRUPT);
                 }
             }
         } catch (Exception e) {
             this.port = 0;
-            System.out.println(AppConfig.WARNING_KEY
-                               + AppConfig.COLON_SEPARATOR
-                               + AppConfig.SPACE_SEPARATOR
-                               + AppConfig.ERROR_NO_FREE_PORT
-                               );
+            LOGGER.severe(AppConfig.ERROR_NO_FREE_PORT);
         }
     }
 
@@ -76,10 +73,8 @@ public final class GitSocket {
 
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
-                //System.out.println("Received command: " + inputLine);
-                //System.out.println(inputLine.split(" ").length);
+                LOGGER.finest("Received command: " + inputLine);
                 if (inputLine.split(" ").length > 1) {
-                    //System.out.println("Inside if: " + inputLine.split(" ")[1]);
                     CurrentUserRepo.getInstance().setRepoName(inputLine.split(" ")[1]);
                     if (inputLine.split(" ").length > 2) {
                         CurrentUserRepo.getInstance().setRepoSignature(inputLine.split(" ")[2]);
@@ -88,23 +83,21 @@ public final class GitSocket {
                 Map<String, String> responseMap = new HashMap<>();
                 responseMap = CommandManager.INSTANCE.executeCommand(inputLine.split(" ")[0]);
 
-                System.out.println("GitSocketResponseMap: " + responseMap.toString() + ", Command: " + inputLine.split(" ")[0]);
+                LOGGER.fine("GitSocketResponseMap: " + responseMap.toString() + ", Command: " + inputLine.split(" ")[0]);
 
                 if (responseMap.containsKey(AppConfig.COMMAND_SUCCESS)) {
-                    System.out.println("success");
                     out.println(AppConfig.COMMAND_SUCCESS);
                 } else {
-                    System.out.println("error");
                     out.println(responseMap.get(AppConfig.ERROR_KEY));
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.getMessage());
         } finally {
             try {
                 clientSocket.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.severe(e.getMessage());
             }
         }
     }
@@ -118,7 +111,7 @@ public final class GitSocket {
                 serverThread.interrupt();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.getMessage());
         }
     }
 
@@ -128,6 +121,7 @@ public final class GitSocket {
 
     protected void setGitPort(int port) {
         this.port = port;
+        LOGGER.config("Setting Git Port: " + port);
         startServer();
     }
 }

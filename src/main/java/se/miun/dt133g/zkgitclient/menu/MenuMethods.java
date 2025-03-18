@@ -5,6 +5,7 @@ import se.miun.dt133g.zkgitclient.commands.CommandManager;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionHandler;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionFactory;
 import se.miun.dt133g.zkgitclient.user.UserCredentials;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.Utils;
 import se.miun.dt133g.zkgitclient.support.FileUtils;
 import se.miun.dt133g.zkgitclient.support.MenuItems;
@@ -17,9 +18,11 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Comparator;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 public abstract class MenuMethods {
 
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     protected UserCredentials credentials = UserCredentials.getInstance();
     protected FileUtils fileUtils = FileUtils.getInstance();
     protected Utils utils = Utils.getInstance();
@@ -285,14 +288,8 @@ public abstract class MenuMethods {
             .forEach(entry -> {
                     String[] repoValues = entry.getValue().split(AppConfig.UNDERSCORE);
                     aesHandler.setInput(repoValues[0]);
-                    String input = repoValues[4].replaceAll("[\\[\\] ]", "");
-                    String[] byteStrings = input.split(";");
-                    byte[] byteArray = new byte[byteStrings.length];
                     try {
-                        for (int i = 0; i < byteStrings.length; i++) {
-                            byteArray[i] = Byte.parseByte(byteStrings[i]);
-                        }
-                        aesHandler.setIv(byteArray);
+                        aesHandler.setIv(utils.ivArrayToByteArray(repoValues[4]));
                         aesHandler.decrypt();
                         System.out.printf(format,
                                           entry.getKey(),

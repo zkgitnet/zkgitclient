@@ -2,12 +2,16 @@ package se.miun.dt133g.zkgitclient.commands.account;
 
 import se.miun.dt133g.zkgitclient.commands.Command;
 import se.miun.dt133g.zkgitclient.menu.MainMenu;
+import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public final class RequestRepoDeletion extends BaseCommandAccount implements Command {
+
+    private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     @Override public String execute() {
         return conn.getServerConnectivity() && credentials.hasAccessToken()
