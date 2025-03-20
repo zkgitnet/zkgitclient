@@ -4,17 +4,29 @@ import se.miun.dt133g.zkgitclient.user.UserCredentials;
 import se.miun.dt133g.zkgitclient.user.CurrentUserRepo;
 import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 
+import java.io.BufferedOutputStream;
 import java.io.RandomAccessFile;
 import java.io.IOException;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.PipedOutputStream;
+import java.io.PipedInputStream;
 import java.nio.file.Files;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.IntStream;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import java.util.zip.ZipInputStream;
 
 public final class FileUtils {
 
@@ -35,6 +47,55 @@ public final class FileUtils {
             }
         }
         return INSTANCE;
+    }
+
+    public void unzipDirectoryStream(InputStream inputStream, final String outputDir) {
+        try (ZipInputStream zipIn = new ZipInputStream(inputStream)) {
+            LOGGER.fine("Starting decompression of repo");
+            ZipEntry entry;
+            while ((entry = zipIn.getNextEntry()) != null) {
+                Path filePath = Paths.get(outputDir, entry.getName());
+                if (entry.isDirectory()) {
+                    Files.createDirectories(filePath);
+                } else {
+                    Files.createDirectories(filePath.getParent());
+                    try (OutputStream fileOut = Files.newOutputStream(filePath)) {
+                        byte[] buffer = new byte[8 * AppConfig.ONE_KB];
+                        int bytesRead;
+                        while ((bytesRead = zipIn.read(buffer)) != -1) {
+                            fileOut.write(buffer, 0, bytesRead);
+                        }
+                    }
+                }
+                zipIn.closeEntry();
+            }
+            LOGGER.fine("Finished decompressing repo");
+        } catch (IOException e) {
+            LOGGER.severe("Could not decompress repo");
+        }
+    }
+
+    public void zipDirectoryStream(final String sourceDirPath, OutputStream outputStream) {
+        try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+            LOGGER.fine("Starting repo compression");
+            Path sourceDir = Paths.get(sourceDirPath);
+            Files.walk(sourceDir).forEach(path -> {
+                    try {
+                        if (!Files.isDirectory(path)) {
+                            String entryName = sourceDir.relativize(path).toString();
+                            zipOut.putNextEntry(new ZipEntry(entryName));
+                            Files.copy(path, zipOut);
+                            zipOut.closeEntry();
+                        }
+                    } catch (Exception e) {
+                        LOGGER.severe("Could not compress repo file");
+                    }
+                });
+            zipOut.finish();
+            LOGGER.fine("Finished repo compression");
+        } catch (IOException e) {
+            LOGGER.severe("Could not compress repo");
+        }
     }
 
     public String[] splitFile(final String fileName) {
@@ -152,6 +213,4 @@ public final class FileUtils {
             throw new NullPointerException("");
         }
     }
-
-
 }

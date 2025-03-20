@@ -15,11 +15,8 @@ public final class EncryptionFactory {
     private EncryptionFactory() { }
 
     public static EncryptionHandler getEncryptionHandler(final String type) {
-        Map<String, Supplier<EncryptionHandler>> handlers = Map.of(
-                                                                   AppConfig.CRYPTO_AES,
+        Map<String, Supplier<EncryptionHandler>> handlers = Map.of(AppConfig.CRYPTO_AES,
                                                                    AesEncryptionHandler::getInstance,
-                                                                   AppConfig.CRYPTO_AES_FILE,
-                                                                   AesFileEncryptionHandler::getInstance,
                                                                    AppConfig.CRYPTO_PBKDF2,
                                                                    Pbkdf2KeyGenerator::getInstance,
                                                                    AppConfig.CRYPTO_RSA,
@@ -29,8 +26,7 @@ public final class EncryptionFactory {
                                                                    AppConfig.CRYPTO_RSA_SIGNATURE,
                                                                    RsaSignatureHandler::getInstance,
                                                                    AppConfig.CRYPTO_SHA_256_FILE,
-                                                                   Sha256HashFileHandler::getInstance
-                                                                   );
+                                                                   Sha256HashFileHandler::getInstance);
 
         return Optional.ofNullable(handlers.get(type))
             .map(Supplier::get)

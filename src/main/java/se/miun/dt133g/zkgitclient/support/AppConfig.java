@@ -126,6 +126,8 @@ public final class AppConfig {
 
     public static final int CHUNK_SIZE = 1048576; // 1 MB = 1024 * 1024 KB
 
+    public static final int ONE_KB = 1024;
+
     public static final String FILE_READ_MODE = "r";
 
     public static final int NUM_RETRIES = 5;
@@ -214,7 +216,7 @@ public final class AppConfig {
 
     public static final String CRYPTO_RSA_SIGNATURE = "RSA_SIGN";
 
-    public static final String CRYPTO_AES_FILE = "AES_FILE";
+    public static final String CRYPTO_AES_STREAM = "AES_STREAM";
 
     public static final String CRYPTO_AES_GCM = "AES/GCM/NoPadding";
 

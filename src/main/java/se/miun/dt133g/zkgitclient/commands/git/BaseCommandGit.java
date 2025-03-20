@@ -3,6 +3,8 @@ package se.miun.dt133g.zkgitclient.commands.git;
 import se.miun.dt133g.zkgitclient.commands.BaseCommand;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionHandler;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionFactory;
+import se.miun.dt133g.zkgitclient.crypto.StreamEncryptionHandler;
+import se.miun.dt133g.zkgitclient.crypto.StreamEncryptionFactory;
 import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.FileUtils;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
@@ -13,7 +15,8 @@ import java.util.logging.Logger;
 public abstract class BaseCommandGit extends BaseCommand {
 
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
-    protected EncryptionHandler aesFileHandler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_AES_FILE);
+    protected StreamEncryptionHandler aesStreamHandler =
+        StreamEncryptionFactory.getStreamEncryptionHandler(AppConfig.CRYPTO_AES_STREAM);
     protected EncryptionHandler aesHandler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_AES);
     protected EncryptionHandler sha256Handler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_SHA_256);
     protected FileUtils fileUtils = FileUtils.getInstance();
@@ -35,10 +38,10 @@ public abstract class BaseCommandGit extends BaseCommand {
 
     protected void performFileEncryption(final String fileName) {
         try {
-            aesFileHandler.setInput(fileName);
+            /*aesFileHandler.setInput(fileName);
             aesFileHandler.setAesKey(credentials.getAesKey());
             aesFileHandler.setIv(credentials.getIv());
-            aesFileHandler.encrypt();
+            aesFileHandler.encrypt();*/
         } catch (Exception e) {
 
         }
@@ -46,10 +49,10 @@ public abstract class BaseCommandGit extends BaseCommand {
 
     protected Optional<String> performDecryption() {
         try {
-            aesFileHandler.setInput(currentRepo.getEncFileName());
+            /*aesFileHandler.setInput(currentRepo.getEncFileName());
             aesFileHandler.setAesKey(credentials.getAesKey());
             aesFileHandler.setIv(credentials.getIv());
-            aesFileHandler.decrypt();
+            aesFileHandler.decrypt();*/
             System.out.println("Decrypion success");
             return Optional.of("{" + AppConfig.COMMAND_SUCCESS + "=,}");
         } catch (Exception e) {
