@@ -24,14 +24,8 @@ public final class SendRepoFile extends BaseCommandGit implements Command {
             .filter(valid -> credentials.hasAccessToken())
             .map(valid -> {
 
-                    performEncryption(currentRepo.getRepoName());
-                    performFileEncryption(currentRepo.getRepoName());
-
-                    String[] fileNames = fileUtils.splitFile(currentRepo.getEncFileName());
-
-                    for (String fileName : fileNames) {
-                        retryIfTransmissionFailure(fileName);
-                    }
+                    sha256Handler.setInput(currentRepo.getRepoName());
+                    sha256Handler.encrypt();
 
                     Map<String, String> postData = new HashMap<>();
                     postData.put(AppConfig.COMMAND_KEY,
@@ -42,55 +36,19 @@ public final class SendRepoFile extends BaseCommandGit implements Command {
                                  credentials.getUsername());
                     postData.put(AppConfig.CREDENTIAL_ACCESS_TOKEN,
                                  credentials.getAccessToken());
-                    postData.put(AppConfig.NUM_CHUNKS,
-                                 Integer.toString(fileNames.length));
+                    /*postData.put(AppConfig.NUM_CHUNKS,
+                      Integer.toString(fileNames.length));*/
                     postData.put(AppConfig.ENC_FILE_NAME,
-                                 currentRepo.getEncFileName());
+                                 sha256Handler.getOutput());
                     postData.put(AppConfig.REPO_SIGNATURE,
                                  currentRepo.getRepoSignature());
 
-                    return prepareAndSendPostRequest(postData);
+                    
+                    return performFileEncryption(currentRepo.getRepoPath(), postData,
+                                                 sha256Handler.getOutput());
                 })
             .orElseGet(() -> {
                     return createErrorResponse(AppConfig.ERROR_CONNECTION);
                 });
-    }
-
-    private boolean retryIfTransmissionFailure(final String encFilePath) {
-
-        sha256FileHandler.setInput(encFilePath);
-        sha256FileHandler.encrypt();
-        
-        for (int i = 0; i < AppConfig.NUM_RETRIES; i++) {
-            Map<String, String> postData = Map.of(
-                                                  AppConfig.COMMAND_KEY,
-                                                  AppConfig.COMMAND_TRANSFER_REPO,
-                                                  AppConfig.CREDENTIAL_ACCOUNT_NR,
-                                                  credentials.getAccountNumber(),
-                                                  AppConfig.CREDENTIAL_USERNAME,
-                                                  credentials.getUsername(),
-                                                  AppConfig.CREDENTIAL_ACCESS_TOKEN,
-                                                  credentials.getAccessToken(),
-                                                  AppConfig.ENC_FILE_NAME,
-                                                  new File(encFilePath).getName(),
-                                                  AppConfig.FILE_SHA256_HASH,
-                                                  sha256FileHandler.getOutput()
-                                                  );
-
-            String result = prepareAndSendFilePostRequest(Paths.get(encFilePath).toFile(), postData);
-
-            if (result.contains(AppConfig.COMMAND_SUCCESS)) {
-                return true;
-            }
-
-            if (result.contains("Connection failure")) {
-                try {
-                    Thread.sleep(AppConfig.ONE_SECOND);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-        return false;
     }
 }

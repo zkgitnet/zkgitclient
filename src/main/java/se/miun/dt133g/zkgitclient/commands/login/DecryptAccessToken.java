@@ -15,6 +15,9 @@ public final class DecryptAccessToken extends BaseCommandLogin implements Comman
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     @Override public String execute() {
+
+        LOGGER.info("Decrypting access token");
+        
         return Optional.ofNullable(readPassword(AppConfig.INFO_ENTER_PASSWORD, AppConfig.INFO_INVALID_PASSWORD, AppConfig.REGEX_PASSWORD))
             .filter(password -> !AppConfig.ERROR_KEY.equals(password))
             .map(password -> {
@@ -25,36 +28,30 @@ public final class DecryptAccessToken extends BaseCommandLogin implements Comman
                     aesHandler.decrypt();
 
                     credentials.setPrivRsa(aesHandler.getOutput());
-                    //System.out.println(aesHandler.getOutput());
-
                     rsaHandler.setRsaKey(aesHandler.getOutput());
                     rsaHandler.setInput(credentials.getEncAccessToken());
                     rsaHandler.decrypt();
 
                     String decryptedAccessToken = rsaHandler.getOutput();
 
-                    //System.out.println("DecryptedAccessToken: " + decryptedAccessToken);
-
                     if (decryptedAccessToken.length() == AppConfig.CRYPTO_TOKEN_LENGTH) {
 
                         credentials.setAccessToken(decryptedAccessToken);
                         
-                        Map<String, String> postData = Map.of(
-                                                              AppConfig.COMMAND_KEY,
+                        Map<String, String> postData = Map.of(AppConfig.COMMAND_KEY,
                                                               AppConfig.COMMAND_REQUEST_AES_KEY,
                                                               AppConfig.CREDENTIAL_ACCOUNT_NR,
                                                               credentials.getAccountNumber(),
                                                               AppConfig.CREDENTIAL_USERNAME,
                                                               credentials.getUsername(),
                                                               AppConfig.CREDENTIAL_ACCESS_TOKEN,
-                                                              credentials.getAccessToken()
-                                                              );
+                                                              credentials.getAccessToken());
                         return prepareAndSendPostRequest(postData);
                     } else {
-                        System.out.println(AppConfig.ERROR_KEY
-                                           + AppConfig.COLON_SEPARATOR
-                                           + AppConfig.SPACE_SEPARATOR
-                                           + AppConfig.ERROR_INVALID_PASSWORD);
+                        LOGGER.severe(AppConfig.ERROR_KEY
+                                      + AppConfig.COLON_SEPARATOR
+                                      + AppConfig.SPACE_SEPARATOR
+                                      + AppConfig.ERROR_INVALID_PASSWORD);
                         return AppConfig.NONE;
                     }
                 })

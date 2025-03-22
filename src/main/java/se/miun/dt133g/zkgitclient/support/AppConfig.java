@@ -195,6 +195,8 @@ public final class AppConfig {
 
     public static final String DB_REPO_EXP_DATE = "expdate";
 
+    public static final String DB_REPO_HASH = "commithash";
+
     // Crypto
     public static final String CRYPTO_PBKDF2_METHOD = "PBKDF2WithHmacSHA512";
 

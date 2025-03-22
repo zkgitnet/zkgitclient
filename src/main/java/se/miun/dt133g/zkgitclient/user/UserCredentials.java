@@ -89,6 +89,11 @@ public final class UserCredentials {
         this.iv = convertJsonArrayToByteArray(jsonArray);
     }
 
+    public void setIv(final String ivArray) {
+        JSONArray jsonArray = new JSONArray(ivArray.replace(";",","));
+        setIv(jsonArray);
+    }
+
     public void setEncAesKey(final String encAesKey) {
         this.encAesKey = encAesKey;
     }

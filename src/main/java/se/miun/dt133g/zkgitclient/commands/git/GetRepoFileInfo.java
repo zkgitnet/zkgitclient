@@ -16,6 +16,9 @@ public final class GetRepoFileInfo extends BaseCommandGit implements Command {
         + "=" + AppConfig.STATUS_REPO_UPTODATE + ",}";
 
     @Override public String execute() {
+
+        LOGGER.info("Preparing to retrieve repo file information from remote server");
+        
         return performEncryption(currentRepo.getRepoName())
             .map(encFileName -> {
                     Map<String, String> postData = new HashMap<>();

@@ -86,6 +86,14 @@ public final class Utils {
         return byteArray;
     }
 
+    public int[] byteArrayToIntArray(final byte[] array) {
+        int[] intArray = new int[array.length];
+        for (int i = 0; i < array.length; i++) {
+            intArray[i] = array[i];
+        }
+        return intArray;
+    }
+
     public String formatIntArray(final String label, final int[] array) {
          StringBuilder sb = new StringBuilder();
          sb.append("\"").append(label).append("\":[");

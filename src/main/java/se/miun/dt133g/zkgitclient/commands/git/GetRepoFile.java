@@ -16,7 +16,13 @@ public final class GetRepoFile extends BaseCommandGit implements Command {
 
     @Override public String execute() {
 
-        getRepoFileInfo.execute();
+        LOGGER.info("Preparing to get repo file from remote server");
+
+        Map<String, String> infoResponse = extractResponseToMap(getRepoFileInfo.execute());
+        LOGGER.finest(infoResponse.get(AppConfig.DB_REPO_HASH));
+        currentRepo.setRepoSignature(infoResponse.get(AppConfig.DB_REPO_HASH));
+        LOGGER.finest(infoResponse.get(AppConfig.DB_IV));
+        credentials.setIv(infoResponse.get(AppConfig.DB_IV));
         
         return performEncryption(currentRepo.getRepoName())
             .map(encFileName -> {

@@ -33,80 +33,23 @@ public final class GenerateEncryptionKeys {
         try {
             generateKeyPair();
         } catch (Exception e) {
+            LOGGER.severe("Could not generate encryption keys: " + e.getMessage());
         }
-    }
-
-    private void generateKeyPair() throws Exception {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(AppConfig.CRYPTO_RSA);
-        keyPairGenerator.initialize(AppConfig.CRYPTO_RSA_KEY_LENGTH);
-        keyPair = keyPairGenerator.generateKeyPair();
     }
 
     public String generatePrivateRsaJwk() throws Exception {
-        if (keyPair == null) {
-            throw new IllegalStateException("Key pair not generated.");
-        }
-
-        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-
-        RSAKey jwk = new RSAKey.Builder(publicKey)
-            .privateKey(privateKey)
-            .algorithm(JWEAlgorithm.RSA_OAEP_512)
-            .keyUse(KeyUse.ENCRYPTION)
-            .build();
-
-        String jsonString = jwk.toJSONString();
-
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = mapper.readTree(jsonString);
-
-        if (jsonNode.isObject()) {
-            ObjectNode objectNode = (ObjectNode) jsonNode;
-
-            ArrayNode keyOpsArray = mapper.createArrayNode();
-            keyOpsArray.add("decrypt");
-            objectNode.set("key_ops", keyOpsArray);
-
-            objectNode.put("ext", true);
-            objectNode.remove("use");
-        }
-
-        return mapper.writeValueAsString(jsonNode);
+        LOGGER.finest("Generating private RSA key");
+        return generateRsaJwk(true, "decrypt");
     }
 
     public String generatePublicRsaJwk() throws Exception {
-        if (keyPair == null) {
-            throw new IllegalStateException("Key pair not generated.");
-        }
-
-        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-
-        RSAKey jwk = new RSAKey.Builder(publicKey)
-            .algorithm(JWEAlgorithm.RSA_OAEP_512)
-            .keyUse(KeyUse.ENCRYPTION)
-            .build();
-
-        String jsonString = jwk.toJSONString();
-
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = mapper.readTree(jsonString);
-
-        if (jsonNode.isObject()) {
-            ObjectNode objectNode = (ObjectNode) jsonNode;
-
-            ArrayNode keyOpsArray = mapper.createArrayNode();
-            keyOpsArray.add("encrypt");
-            objectNode.set("key_ops", keyOpsArray);
-
-            objectNode.put("ext", true);
-            objectNode.remove("use");
-        }
-
-        return mapper.writeValueAsString(jsonNode);
+        LOGGER.finest("Generating public RSA key");
+        return generateRsaJwk(false, "encrypt");
     }
 
+
     public int[] generateSalt() {
+        LOGGER.finest("Generating password salt");
         byte[] saltBytes = new byte[AppConfig.CRYPTO_SALT_LENGTH];
         SecureRandom random = new SecureRandom();
         random.nextBytes(saltBytes);
@@ -114,6 +57,7 @@ public final class GenerateEncryptionKeys {
     }
 
     public int[] generateIv() {
+        LOGGER.finest("Generating AES-IV");
         byte[] ivBytes = new byte[AppConfig.CRYPTO_IV_LENGTH];
         SecureRandom random = new SecureRandom();
         random.nextBytes(ivBytes);
@@ -129,6 +73,8 @@ public final class GenerateEncryptionKeys {
     }
 
     public String generateTotpSecret() {
+        LOGGER.finest("Generating new TOTP secret");
+        
         SecureRandom random = new SecureRandom();
         StringBuilder secret = new StringBuilder(AppConfig.CRYPTO_TOTP_SECRET_LENGTH);
 
@@ -138,5 +84,46 @@ public final class GenerateEncryptionKeys {
         }
 
         return secret.toString();
+    }
+    
+    private void generateKeyPair() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(AppConfig.CRYPTO_RSA);
+        keyPairGenerator.initialize(AppConfig.CRYPTO_RSA_KEY_LENGTH);
+        keyPair = keyPairGenerator.generateKeyPair();
+    }
+
+    private String generateRsaJwk(boolean includePrivate, String keyOp) throws Exception {
+        if (keyPair == null) {
+            throw new IllegalStateException("RSA key pair not generated.");
+        }
+
+        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+        RSAKey.Builder jwkBuilder = new RSAKey.Builder(publicKey)
+            .algorithm(JWEAlgorithm.RSA_OAEP_512)
+            .keyUse(KeyUse.ENCRYPTION);
+
+        if (includePrivate) {
+            RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+            jwkBuilder.privateKey(privateKey);
+        }
+
+        RSAKey jwk = jwkBuilder.build();
+        String jsonString = jwk.toJSONString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode jsonNode = mapper.readTree(jsonString);
+
+        if (jsonNode.isObject()) {
+            ObjectNode objectNode = (ObjectNode) jsonNode;
+
+            ArrayNode keyOpsArray = mapper.createArrayNode();
+            keyOpsArray.add(keyOp);
+            objectNode.set("key_ops", keyOpsArray);
+
+            objectNode.put("ext", true);
+            objectNode.remove("use");
+        }
+
+        return mapper.writeValueAsString(jsonNode);
     }
 }

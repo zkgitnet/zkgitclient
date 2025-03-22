@@ -19,6 +19,7 @@ import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
 import java.io.File;
+import java.io.InputStream;
 import java.util.Scanner;
 import java.util.Map;
 import java.util.HashMap;
@@ -49,8 +50,9 @@ public abstract class BaseCommand {
         return conn.sendGetPostRequest(postData);
     }
 
-    protected String prepareAndSendFilePostRequest(final File file, final Map<String, String> postData) {
-        return conn.sendFilePostRequest(file, postData);
+    protected String prepareAndSendFilePostRequest(final Map<String, String> postData,
+                                                   InputStream fileInputStream, final String fileName) {
+        return conn.sendFilePostRequest(postData, fileInputStream, fileName);
     }
 
     protected String createErrorResponse(final String errorMessage) {

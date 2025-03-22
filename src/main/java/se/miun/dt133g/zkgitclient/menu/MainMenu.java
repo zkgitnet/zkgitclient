@@ -100,8 +100,7 @@ public class MainMenu extends MenuMethods {
         System.out.println(MenuItems.HEADER_MENU);
         String format = String.format(MenuItems.FORMAT_DISPLAY_MENU, MenuItems.COLUMN_WIDTH_MENU);
 
-        List<String> menuNumbers = Arrays.asList(
-                                                 MenuItems.ITEM_ONE,
+        List<String> menuNumbers = Arrays.asList(MenuItems.ITEM_ONE,
                                                  MenuItems.ITEM_TWO,
                                                  MenuItems.ITEM_THREE,
                                                  MenuItems.ITEM_FOUR,
@@ -117,28 +116,25 @@ public class MainMenu extends MenuMethods {
                                                  MenuItems.ITEM_FOURTEEN,
                                                  MenuItems.ITEM_FIFTEEN,
                                                  MenuItems.ITEM_ZERO,
-                                                 MenuItems.ITEM_E
-                                                 );
+                                                 MenuItems.ITEM_E);
 
-        List<String> menuCommands = Arrays.asList(
-                                                 MenuItems.ITEM_LOGIN,
-                                                 MenuItems.ITEM_LOGOUT,
-                                                 MenuItems.ITEM_STATUS,
-                                                 MenuItems.ITEM_ACCOUNT_DATA,
-                                                 MenuItems.ITEM_CHANGE_PORT,
-                                                 MenuItems.ITEM_LIST_USER,
-                                                 MenuItems.ITEM_ADD_USER,
-                                                 MenuItems.ITEM_MODIFY_USER,
-                                                 MenuItems.ITEM_CHANGE_PASSWORD,
-                                                 MenuItems.ITEM_DELETE_USER,
-                                                 MenuItems.ITEM_LIST_PAYMENTS,
-                                                 MenuItems.ITEM_EXPORT_INVOICE,
-                                                 MenuItems.ITEM_LIST_REPOS,
-                                                 MenuItems.ITEM_DELETE_REPO,
-                                                 MenuItems.ITEM_EXPORT_KEYS,
-                                                 MenuItems.ITEM_CLOSE,
-                                                 MenuItems.ITEM_STOP_EXIT
-                                                 );
+        List<String> menuCommands = Arrays.asList(MenuItems.ITEM_LOGIN,
+                                                  MenuItems.ITEM_LOGOUT,
+                                                  MenuItems.ITEM_STATUS,
+                                                  MenuItems.ITEM_ACCOUNT_DATA,
+                                                  MenuItems.ITEM_CHANGE_PORT,
+                                                  MenuItems.ITEM_LIST_USER,
+                                                  MenuItems.ITEM_ADD_USER,
+                                                  MenuItems.ITEM_MODIFY_USER,
+                                                  MenuItems.ITEM_CHANGE_PASSWORD,
+                                                  MenuItems.ITEM_DELETE_USER,
+                                                  MenuItems.ITEM_LIST_PAYMENTS,
+                                                  MenuItems.ITEM_EXPORT_INVOICE,
+                                                  MenuItems.ITEM_LIST_REPOS,
+                                                  MenuItems.ITEM_DELETE_REPO,
+                                                  MenuItems.ITEM_EXPORT_KEYS,
+                                                  MenuItems.ITEM_CLOSE,
+                                                  MenuItems.ITEM_STOP_EXIT);
 
         List<Integer> rowSeparation = Arrays.asList(2, 5, 10, 12, 14, 15);
 
@@ -151,9 +147,11 @@ public class MainMenu extends MenuMethods {
     }
     
     private void exitApplication() {
-        fileUtils.cleanTmpRepo();
+        CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_REQUEST_LOGOUT);
+        fileUtils.cleanTmpFiles();
         credentials.clearUserData();
         System.out.println(MenuItems.STATUS_EXIT);
+        LOGGER.info(MenuItems.STATUS_EXIT);
         System.exit(0);
     }
 }

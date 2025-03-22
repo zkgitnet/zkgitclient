@@ -32,20 +32,23 @@ public final class ZkGitLogger {
         Logger logger = Logger.getLogger(clazz.getName());
         
         logger.setLevel(AppConfig.LOG_LEVEL);
-        logger.addHandler(consoleHandler);
         logger.setUseParentHandlers(false);
+
+        if (logger.getHandlers().length == 0) {
+            logger.addHandler(consoleHandler);
+        }
         
         return logger;
     }
 
     private static class ColoredFormatter extends Formatter {
-        private static final String RESET = "\u001B[0m"; // Reset color
-        private static final String RED = "\u001B[31m";  // SEVERE (Red)
-        private static final String YELLOW = "\u001B[33m"; // WARNING (Yellow)
-        private static final String BLUE = "\u001B[34m"; // INFO (Blue)
-        private static final String GREEN = "\u001B[32m"; // CONFIG (Green)
-        private static final String CYAN = "\u001B[36m"; // FINE (Cyan)
-        private static final String PURPLE = "\u001B[35m"; // FINER (Purple)
+        private static final String RESET = "\u001B[0m";
+        private static final String RED = "\u001B[31m";
+        private static final String YELLOW = "\u001B[33m";
+        private static final String BLUE = "\u001B[34m"; 
+        private static final String GREEN = "\u001B[32m";
+        private static final String CYAN = "\u001B[36m";
+        private static final String PURPLE = "\u001B[35m";
         private static final String MAGENTA = "\u001B[95m";
 
         @Override

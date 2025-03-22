@@ -17,13 +17,13 @@ public final class LoginRequest extends BaseCommandLogin implements Command {
     @Override public String execute() {
 
         if (conn.getServerConnectivity()) {
-        
+
+            LOGGER.info("Initiating login process");
             Map<String, String> loginStatus =
                 CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_LOGIN_STATUS);
 
             return !loginStatus.containsValue(AppConfig.STATUS_AUTHORIZATION_VALID)
-                ? handleLoginProcess()
-                : AppConfig.STATUS_LOGGED_IN;
+                ? handleLoginProcess() : AppConfig.STATUS_LOGGED_IN;
 
         } else {
             Map<String, String> responseMap = new HashMap<>();
@@ -46,14 +46,12 @@ public final class LoginRequest extends BaseCommandLogin implements Command {
                        .filter(username -> !AppConfig.ERROR_KEY.equals(username))
                        .map(username -> {
                                credentials.setUsername(username);
-                               Map<String, String> postData = Map.of(
-                                                                     AppConfig.COMMAND_KEY,
+                               Map<String, String> postData = Map.of(AppConfig.COMMAND_KEY,
                                                                      AppConfig.COMMAND_GET_TOTP,
                                                                      AppConfig.CREDENTIAL_ACCOUNT_NR,
                                                                      credentials.getAccountNumber(),
                                                                      AppConfig.CREDENTIAL_USERNAME,
-                                                                     credentials.getUsername()
-                                                                     );
+                                                                     credentials.getUsername());
                            return prepareAndSendPostRequest(postData);
                        })
                        .orElse(AppConfig.COMMAND_EXIT);

@@ -15,6 +15,8 @@ public final class LogoutRequest extends BaseCommandLogin implements Command {
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     @Override public String execute() {
+
+        LOGGER.info("Initiating logout process");
         Map<String, String> loginStatus = CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_LOGIN_STATUS);
 
         return Optional.of(loginStatus)

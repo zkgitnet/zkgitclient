@@ -13,6 +13,9 @@ public final class SendTotp extends BaseCommandLogin implements Command {
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     @Override public String execute() {
+
+        LOGGER.info("Verifying TOTP Token");
+        
         return Optional.ofNullable(readUserInput(AppConfig.INFO_ENTER_TOTP, AppConfig.INFO_INVALID_TOTP_INPUT, AppConfig.REGEX_TOTP))
                        .filter(token -> !AppConfig.ERROR_KEY.equals(token))
                        .map(token -> {

@@ -4,6 +4,7 @@ import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Logger;
@@ -35,16 +36,19 @@ public final class ConnectionManager {
 
     public String sendPostRequest(final Map<String, String> postDataParams)
         throws NullPointerException {
-        System.out.println("Sending POST Request to: " + domain + port);
+        LOGGER.finer("Sending POST Request to: https://" + domain + ":" + port);
         return this.httpsConnection.sendPostRequest(domain, port, postDataParams);
     }
 
-    public String sendFilePostRequest(final File file, final Map<String, String> postDataParams) {
-        return this.httpsConnection.sendFilePostRequest(IP, port, file, postDataParams);
+    public String sendFilePostRequest(final Map<String, String> postDataParams,
+                                      final InputStream fileInputStream,
+                                      final String fileName) {
+        return this.httpsConnection.sendFilePostRequest(IP, port, fileInputStream, fileName, postDataParams);
     }
 
     public void setIP(final String ipv4, final String ipv6) {
         this.IP = checkConnection.getIpv6Connectivity() ? AppConfig.FORWARD_SQUARE_BRACKET + ipv6 + AppConfig.BACKWARD_SQUARE_BRACKET : ipv4;
+        LOGGER.config("Set remote server IP to: " + IP);
     }
 
     public boolean getServerConnectivity() {
@@ -77,19 +81,19 @@ public final class ConnectionManager {
             try {
                 int portInput = Integer.parseInt(input);
                 if (portInput < 0 || portInput > AppConfig.MAX_PORT_NUMBER) {
-                    System.out.println(AppConfig.INFO_INVALID_PORT_NUMBER);
+                    LOGGER.warning(AppConfig.INFO_INVALID_PORT_NUMBER);
                 } else {
                     gitSocket.restartServer(portInput);
                     this.gitSocket = gitSocket.INSTANCE;
                     if (gitSocket.getGitPort() > 0) {
-                        System.out.println(AppConfig.INFO_PORT_SET + input);
+                        LOGGER.info(AppConfig.INFO_PORT_SET + input);
                         break;
                     } else {
-                        System.out.println(AppConfig.ERROR_PORT_NOT_FREE);
+                        LOGGER.warning(AppConfig.ERROR_PORT_NOT_FREE);
                     }
                 }
             } catch (NumberFormatException e) {
-                System.out.println(AppConfig.ERROR_INVALID_PORT);
+                LOGGER.warning(AppConfig.ERROR_INVALID_PORT);
             }
         }
     }

@@ -11,7 +11,8 @@ public final class DecryptAesKey extends BaseCommandLogin implements Command {
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     @Override public String execute() {
-        LOGGER.info(AppConfig.NONE);
+        LOGGER.info("Decrypting AES Key");
+        
         rsaHandler.setRsaKey(credentials.getPrivRsa());
         rsaHandler.setInput(credentials.getEncAesKey());
         rsaHandler.decrypt();

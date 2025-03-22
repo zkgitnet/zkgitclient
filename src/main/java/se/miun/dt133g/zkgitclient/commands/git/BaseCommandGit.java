@@ -9,6 +9,11 @@ import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.FileUtils;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -31,19 +36,67 @@ public abstract class BaseCommandGit extends BaseCommand {
             currentRepo.setEncFileName(encFileName);
             return Optional.of(encFileName);
         } catch (Exception e) {
-            System.err.println("Encryption failed: " + e.getMessage());
+            LOGGER.severe("Encryption failed: " + e.getMessage());
             return Optional.empty();
         }
     }
 
-    protected void performFileEncryption(final String fileName) {
-        try {
-            /*aesFileHandler.setInput(fileName);
-            aesFileHandler.setAesKey(credentials.getAesKey());
-            aesFileHandler.setIv(credentials.getIv());
-            aesFileHandler.encrypt();*/
-        } catch (Exception e) {
+    protected String performFileEncryption(final String sourceDirPath,
+                                           final Map<String, String> postData,
+                                           final String fileName) {
 
+        LOGGER.fine("Initializing compression and encryption of the repo");
+        
+        try (PipedOutputStream zipOutputStream = new PipedOutputStream();
+             PipedInputStream encryptInputStream = new PipedInputStream(zipOutputStream);
+             PipedOutputStream encryptOutputStream = new PipedOutputStream();
+             PipedInputStream transferInputStream = new PipedInputStream(encryptOutputStream)) {
+
+            Thread zipThread = new Thread(() -> {
+                    LOGGER.finest("Starting compression thread");
+                    try {
+                        fileUtils.zipDirectoryStream(sourceDirPath, zipOutputStream);
+                        zipOutputStream.close();
+                    } catch (IOException e) {
+                        LOGGER.severe("Zipping failed: " + e.getMessage());
+                    }
+            });
+
+            Thread encryptThread = new Thread(() -> {
+                    LOGGER.finest("Starting encryption thread");
+                    try {
+                        aesStreamHandler.setAesKey(credentials.getAesKey());
+                        aesStreamHandler.setIv(credentials.getIv());
+                        aesStreamHandler.encryptStream(encryptInputStream, encryptOutputStream);
+                        encryptOutputStream.close();
+                    } catch (Exception e) {
+                        LOGGER.severe("Encryption failed: " + e.getMessage());
+                    }
+            });
+
+            final String[] responseHolder = new String[1];
+            Thread transferThread = new Thread(() -> {
+                    LOGGER.finest("Starting file transfer thread");
+                    try {
+                        responseHolder[0] = prepareAndSendFilePostRequest(postData, transferInputStream, fileName);
+                    } catch (Exception e) {
+                        LOGGER.severe("File transfer failed: " + e.getMessage());
+                    }
+            });
+
+            zipThread.start();
+            encryptThread.start();
+            transferThread.start();
+
+            zipThread.join();
+            encryptThread.join();
+            transferThread.join();
+
+            LOGGER.fine("Successfully compressed and encrypted the repo");
+            return responseHolder[0];
+        } catch (Exception e) {
+            LOGGER.severe("Encryption failed: " + e.getMessage());
+            return AppConfig.ERROR_KEY;
         }
     }
 
@@ -53,10 +106,10 @@ public abstract class BaseCommandGit extends BaseCommand {
             aesFileHandler.setAesKey(credentials.getAesKey());
             aesFileHandler.setIv(credentials.getIv());
             aesFileHandler.decrypt();*/
-            System.out.println("Decrypion success");
+            LOGGER.finest("Decryption success");
             return Optional.of("{" + AppConfig.COMMAND_SUCCESS + "=,}");
         } catch (Exception e) {
-            System.out.println("Decryption failed: " + e.getMessage());
+            LOGGER.severe("Decryption failed: " + e.getMessage());
             return Optional.empty();
         }
     }

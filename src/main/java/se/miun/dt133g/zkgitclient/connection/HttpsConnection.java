@@ -138,79 +138,62 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
 
     protected String sendFilePostRequest(final String domain,
                                          final String port,
-                                         final File file,
+                                         final InputStream fileInputStream,
+                                         final String fileName,
                                          final Map<String, String> postParamData) {
-        String boundary = "==="
-            + System.currentTimeMillis()
-            + "===";
+        String boundary = "===" + System.currentTimeMillis() + "===";
         String LINE_FEED = "\r\n";
 
         try {
             trustAllCertificates();
             HttpsURLConnection connection =
-                (HttpsURLConnection) new URL("https://"
-                                             + domain
-                                             + ":"
-                                             + port
-                                             + uriPath).openConnection();
+                (HttpsURLConnection) new URL("https://" + domain + ":" + port + uriPath).openConnection();
             connection.setRequestMethod(AppConfig.REQUEST_TYPE_POST);
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(1200000);
             connection.setDoOutput(true);
-            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary="
-                                          + boundary);
+            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
-            try (DataOutputStream request =
-                 new DataOutputStream(connection.getOutputStream())) {
-
+            try (DataOutputStream request = new DataOutputStream(connection.getOutputStream())) {
+                // Add form fields
                 String postParamsString = buildPostParamsString(postParamData, boundary, LINE_FEED);
                 request.writeBytes(postParamsString);
 
-                request.writeBytes("--"
-                                   + boundary
-                                   + LINE_FEED
-                                   + "Content-Disposition: form-data; name=\"file\"; filename=\""
-                                   + file.getName()
-                                   + "\""
-                                   + LINE_FEED
-                                   + "Content-Type: "
-                                   + URLConnection.guessContentTypeFromName(file.getName())
-                                   + LINE_FEED
-                                   + "Content-Transfer-Encoding: binary"
-                                   + LINE_FEED
-                                   + LINE_FEED);
-                try (FileInputStream inputStream =
-                     new FileInputStream(file)) {
-                    byte[] buffer = new byte[65536];
-                    int bytesRead;
-                    while ((bytesRead = inputStream.read(buffer)) != -1) {
-                        request.write(buffer, 0, bytesRead);
-                    }
+                // Add file data
+                request.writeBytes("--" + boundary + LINE_FEED
+                                   + "Content-Disposition: form-data; name=\"file\"; filename=\"" + fileName + "\"" + LINE_FEED
+                                   + "Content-Type: " + URLConnection.guessContentTypeFromName(fileName) + LINE_FEED
+                                   + "Content-Transfer-Encoding: binary" + LINE_FEED + LINE_FEED);
+
+                // Read from InputStream instead of FileInputStream
+                byte[] buffer = new byte[65536];
+                int bytesRead;
+                while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                    request.write(buffer, 0, bytesRead);
                 }
 
-                request.writeBytes(LINE_FEED
-                                   + "--"
-                                   + boundary
-                                   + "--"
-                                   + LINE_FEED);
+                // Close file input stream explicitly
+                fileInputStream.close();
+
+                // End of multipart/form-data
+                request.writeBytes(LINE_FEED + "--" + boundary + "--" + LINE_FEED);
             }
 
+            // Handle response
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpsURLConnection.HTTP_OK) {
-                try (BufferedReader in =
-                     new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
                     return in.lines().collect(Collectors.joining("\n"));
                 }
             } else {
-                return String.format("%s %s", AppConfig.ERROR_KEY,
-                                     AppConfig.ERROR_CONNECTION);
+                return String.format("%s %s", AppConfig.ERROR_KEY, AppConfig.ERROR_CONNECTION);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return String.format("%s %s", AppConfig.ERROR_KEY,
-                                 AppConfig.ERROR_CONNECTION);
+            return String.format("%s %s", AppConfig.ERROR_KEY, AppConfig.ERROR_CONNECTION);
         }
     }
+
 
     private String buildPostParamsString(Map<String, String> postParamDataInput, String boundary, String lineFeed) {
         StringBuilder postDataBuilder = new StringBuilder();

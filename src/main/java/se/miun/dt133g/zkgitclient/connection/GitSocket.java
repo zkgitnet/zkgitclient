@@ -74,14 +74,16 @@ public final class GitSocket {
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
                 LOGGER.finest("Received command: " + inputLine);
-                if (inputLine.split(" ").length > 1) {
-                    CurrentUserRepo.getInstance().setRepoName(inputLine.split(" ")[1]);
-                    if (inputLine.split(" ").length > 2) {
-                        CurrentUserRepo.getInstance().setRepoSignature(inputLine.split(" ")[2]);
+                String[] inputItems = inputLine.split(AppConfig.SPACE_SEPARATOR);
+                if (inputItems.length > 1) {
+                    CurrentUserRepo.getInstance().setRepoName(inputItems[1].substring(inputItems[1].lastIndexOf("/") + 1));
+                    CurrentUserRepo.getInstance().setRepoPath(inputItems[1]);
+                    if (inputItems.length > 2) {
+                        CurrentUserRepo.getInstance().setRepoSignature(inputItems[2]);
                     }
                 }
                 Map<String, String> responseMap = new HashMap<>();
-                responseMap = CommandManager.INSTANCE.executeCommand(inputLine.split(" ")[0]);
+                responseMap = CommandManager.INSTANCE.executeCommand(inputItems[0]);
 
                 LOGGER.fine("GitSocketResponseMap: " + responseMap.toString() + ", Command: " + inputLine.split(" ")[0]);
 

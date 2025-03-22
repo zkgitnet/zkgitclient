@@ -57,7 +57,7 @@ public final class CommandManager extends BaseCommand {
         Command command = commandMap.get(commandName);
         Map<String, String> latestResponseMap = new HashMap<>();
 
-        System.out.println("Executing command: " + commandName);
+        LOGGER.fine("Executing command: " + commandName);
 
         while (command != null) {
             String response = command.execute();
@@ -88,11 +88,8 @@ public final class CommandManager extends BaseCommand {
                 if (!errorMessage.contains("No user")
                     && !errorMessage.contains("CommandManager")
                     && !errorMessage.contains("No valid login")) {
-                    System.out.println(AppConfig.NEW_LINE
-                                       + AppConfig.ERROR_KEY
-                                       + AppConfig.COLON_SEPARATOR
-                                       + " "
-                                       + errorMessage);
+                    LOGGER.warning(AppConfig.NEW_LINE + AppConfig.ERROR_KEY
+                                   + AppConfig.COLON_SEPARATOR + " " + errorMessage);
                     break;
                 }
             }

@@ -11,8 +11,6 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
-import java.io.PipedOutputStream;
-import java.io.PipedInputStream;
 import java.nio.file.Files;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
@@ -94,7 +92,7 @@ public final class FileUtils {
             zipOut.finish();
             LOGGER.fine("Finished repo compression");
         } catch (IOException e) {
-            LOGGER.severe("Could not compress repo");
+            LOGGER.severe("Could not compress repo: " + e.getMessage());
         }
     }
 
@@ -140,9 +138,9 @@ public final class FileUtils {
 
         try {
             Files.write(filePath, data.getBytes());
-            System.out.println(AppConfig.INFO_FILE_SAVED + filePath);
+            LOGGER.finest(AppConfig.INFO_FILE_SAVED + filePath);
         } catch (IOException e) {
-            System.err.println(AppConfig.ERROR_FAILED_SAVE_FILE + e.getMessage());
+            LOGGER.warning(AppConfig.ERROR_FAILED_SAVE_FILE + e.getMessage());
         }
     }
 
@@ -150,41 +148,35 @@ public final class FileUtils {
         try {
             if (currentRepo != null) {
                 deleteFile(currentRepo.getEncFileName());
+                LOGGER.finest("Deleting current encrypted tmp repo");
             }
-        } catch (NullPointerException e) {
-        } catch (IOException e) {
+        } catch (Exception e) {
+            LOGGER.warning("Could not delete current encrypted tmp repo");
         }
 
         try {
             if (currentRepo != null) {
                 deleteFile(currentRepo.getRepoName() + AppConfig.ZIP_SUFFIX);
+                LOGGER.finest("Deleting current tmp repo");
             }
-        } catch (NullPointerException e) {
-        } catch (IOException e) {
+        } catch (Exception e) {
+            LOGGER.warning("Could not delete current tmp repo");            
         }
 
         try {
             deleteDirectoryAndContents(Paths.get(System.getProperty(AppConfig.JAVA_TMP),
                                                  (currentRepo != null ? currentRepo.getEncFileName() + AppConfig.PARTS_SUFFIX : "unknown")));
-        } catch (NullPointerException e) {
-        } catch (IOException e) {
+            LOGGER.finest("Deleting enc tmp directory");
+        } catch (Exception e) {
+            LOGGER.warning("Could not delete enc tmp directory");
         }
 
         try {
             deleteDirectoryAndContents(Paths.get(System.getProperty(AppConfig.JAVA_TMP),
                                                  (currentRepo != null ? AppConfig.TMP_PREFIX + currentRepo.getRepoName() : "unknown")));
-        } catch (NullPointerException e) {
-        } catch (IOException e) {
-        }
-    }
-
-    public void cleanTmpRepo() {
-        cleanTmpFiles();
-        try {
-            deleteDirectoryAndContents(Paths.get(System.getProperty(AppConfig.JAVA_TMP),
-                                                 (currentRepo != null ? AppConfig.TMP_PREFIX + currentRepo.getRepoName() : "unknown")));
-        } catch (NullPointerException e) {
-        } catch (IOException e) {
+            LOGGER.finest("Deleting tmp directory");
+        } catch (Exception e) {
+            LOGGER.warning("Could not delete tmp directory");
         }
     }
 

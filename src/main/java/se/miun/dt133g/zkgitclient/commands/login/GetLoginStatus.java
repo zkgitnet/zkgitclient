@@ -16,6 +16,7 @@ public final class GetLoginStatus extends BaseCommandLogin implements Command {
     @Override public String execute() {
         
         Map<String, String> postData = new HashMap<>();
+        LOGGER.info("Retrieving current login status");
         
         return Optional.ofNullable(conn.getServerConnectivity())
             .filter(valid -> credentials.hasAccessToken())
