@@ -30,7 +30,7 @@ public final class ConnectionManager {
         this.gitSocket = GitSocket.INSTANCE;
     }
 
-    public String sendGetPostRequest(final Map<String, String> postDataParams) {
+    public InputStream sendGetPostRequest(final Map<String, String> postDataParams) {
         return this.httpsConnection.sendGetPostRequest(domain, port, postDataParams);
     }
 

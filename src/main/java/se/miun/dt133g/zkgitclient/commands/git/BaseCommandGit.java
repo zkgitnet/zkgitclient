@@ -9,6 +9,8 @@ import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.FileUtils;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
+import java.io.InputStream;
+import java.io.BufferedInputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.FileOutputStream;
@@ -100,17 +102,62 @@ public abstract class BaseCommandGit extends BaseCommand {
         }
     }
 
-    protected Optional<String> performDecryption() {
-        try {
-            /*aesFileHandler.setInput(currentRepo.getEncFileName());
-            aesFileHandler.setAesKey(credentials.getAesKey());
-            aesFileHandler.setIv(credentials.getIv());
-            aesFileHandler.decrypt();*/
-            LOGGER.finest("Decryption success");
-            return Optional.of("{" + AppConfig.COMMAND_SUCCESS + "=,}");
+    protected String performFileDecryption(final InputStream encryptedFileStream,
+                                           final String outputDir) {
+        LOGGER.fine("Initializing decryption and decompression");
+
+        try (PipedOutputStream decryptOutputStream = new PipedOutputStream();
+             PipedInputStream unzipInputStream = new PipedInputStream(decryptOutputStream)) {
+
+            Thread streamWriterThread = new Thread(() -> {
+                    try {
+                        byte[] buffer = new byte[4096]; // Buffer to store chunks of data
+                        int bytesRead;
+                        while ((bytesRead = encryptedFileStream.read(buffer)) != -1) {
+                            decryptOutputStream.write(buffer, 0, bytesRead); // Write to the piped output stream
+                        }
+                        decryptOutputStream.close(); // Close the output stream after writing all data
+                    } catch (IOException e) {
+                        LOGGER.severe("Failed to write to piped output stream: " + e.getMessage());
+                    }
+            });
+
+            Thread decryptThread = new Thread(() -> {
+                    LOGGER.finest("Starting decryption thread");
+                    try {
+                        aesStreamHandler.setAesKey(credentials.getAesKey());
+                        aesStreamHandler.setIv(credentials.getIv());
+                        aesStreamHandler.decryptStream(encryptedFileStream, decryptOutputStream);
+                        LOGGER.finest("Decryption complete, stream closed");
+                    } catch (Exception e) {
+                        LOGGER.severe("Decryption failed: " + e.getMessage());
+                    }
+            });
+
+            Thread unzipThread = new Thread(() -> {
+                    LOGGER.finest("Starting decompression thread");
+                    try {
+                        fileUtils.unzipDirectoryStream(unzipInputStream, outputDir);
+                        LOGGER.finest("Unzipping complete, stream closed");
+                    } catch (Exception e) {
+                        LOGGER.severe("Decompression failed: " + e.getMessage());
+                    }
+            });
+
+            streamWriterThread.start();
+            decryptThread.start();
+            unzipThread.start();
+
+            streamWriterThread.join();
+            decryptThread.join();
+            unzipThread.join();
+
+            LOGGER.fine("Successfully decrypted and decompressed the file");
+            return "Success";
         } catch (Exception e) {
-            LOGGER.severe("Decryption failed: " + e.getMessage());
-            return Optional.empty();
+            LOGGER.severe("Decryption process failed: " + e.getMessage());
+            return AppConfig.ERROR_KEY;
         }
     }
+
 }

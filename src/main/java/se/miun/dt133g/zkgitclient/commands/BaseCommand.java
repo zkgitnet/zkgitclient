@@ -46,7 +46,7 @@ public abstract class BaseCommand {
          return conn.sendPostRequest(postData);
     }
 
-    protected String prepareAndSendGetPostRequest(final Map<String, String> postData) {
+    protected InputStream prepareAndSendGetPostRequest(final Map<String, String> postData) {
         return conn.sendGetPostRequest(postData);
     }
 

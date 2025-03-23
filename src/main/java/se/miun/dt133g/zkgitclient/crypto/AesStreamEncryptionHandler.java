@@ -77,6 +77,7 @@ public final class AesStreamEncryptionHandler implements StreamEncryptionHandler
             LOGGER.fine("Completed " + operation + " of repo");
         } catch (Exception e) {
             LOGGER.severe("Could not " + ((mode == Cipher.ENCRYPT_MODE) ? "encrypt" : "decrypt") + " repo: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

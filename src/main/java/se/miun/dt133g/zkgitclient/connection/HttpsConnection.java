@@ -43,9 +43,9 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
     private CurrentUserRepo currentRepo = CurrentUserRepo.getInstance();
     private String uriPath = AppConfig.URI_PATH;
     
-    protected String sendGetPostRequest(final String domain,
-                                        final String port,
-                                        final Map<String, String> postDataParams) {
+    protected InputStream sendGetPostRequest(final String domain,
+                                             final String port,
+                                             final Map<String, String> postDataParams) {
         try {
             HttpsURLConnection connection =
                 (HttpsURLConnection) new URL("https://"
@@ -64,11 +64,14 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
                 wr.flush();
             }
 
+            sha256Handler.setInput(currentRepo.getRepoName());
+            sha256Handler.encrypt();
+
             if (connection.getResponseCode()
                 == HttpsURLConnection.HTTP_OK) {
-                File file =
+                /*File file =
                     Paths.get(System.getProperty(AppConfig.JAVA_TMP),
-                              currentRepo.getEncFileName()).toFile();
+                              sha256Handler.getOutput()).toFile();
                 try (InputStream in =
                      connection.getInputStream();
                      FileOutputStream fos = new FileOutputStream(file)) {
@@ -78,17 +81,15 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
                         fos.write(buffer, 0, bytesRead);
                     }
                 }
-                connection.disconnect();
-                return AppConfig.COMMAND_SUCCESS;
+                connection.disconnect();*/
+                return connection.getInputStream();
             } else {
-                System.out.println("ErrorResponseCode");
-                return AppConfig.ERROR_KEY;
+                LOGGER.warning("ErrorResponseCode: " + connection.getResponseCode());
+                return null;
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return AppConfig.ERROR_KEY
-                + " "
-                + AppConfig.ERROR_CONNECTION;
+            LOGGER.severe(e.getMessage());
+            return null;
         }
     }
 
