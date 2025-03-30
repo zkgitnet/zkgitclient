@@ -26,7 +26,9 @@ public final class EncryptionFactory {
                                                                    AppConfig.CRYPTO_RSA_SIGNATURE,
                                                                    RsaSignatureHandler::getInstance,
                                                                    AppConfig.CRYPTO_SHA_256_FILE,
-                                                                   Sha256HashFileHandler::getInstance);
+                                                                   Sha256HashFileHandler::getInstance,
+                                                                   "fileAes",
+                                                                   AesFileEncryptionHandler::getInstance);
 
         return Optional.ofNullable(handlers.get(type))
             .map(Supplier::get)

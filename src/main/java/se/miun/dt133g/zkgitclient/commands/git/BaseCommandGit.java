@@ -13,10 +13,13 @@ import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.io.FileInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
 public abstract class BaseCommandGit extends BaseCommand {
@@ -25,6 +28,7 @@ public abstract class BaseCommandGit extends BaseCommand {
     protected StreamEncryptionHandler aesStreamHandler =
         StreamEncryptionFactory.getStreamEncryptionHandler(AppConfig.CRYPTO_AES_STREAM);
     protected EncryptionHandler aesHandler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_AES);
+    protected EncryptionHandler aesFileHandler = EncryptionFactory.getEncryptionHandler("fileAes");
     protected EncryptionHandler sha256Handler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_SHA_256);
     protected FileUtils fileUtils = FileUtils.getInstance();
 
@@ -94,7 +98,7 @@ public abstract class BaseCommandGit extends BaseCommand {
             encryptThread.join();
             transferThread.join();
 
-            LOGGER.fine("Successfully compressed and encrypted the repo");
+            LOGGER.fine("Successfully compressed and encrypted the repo" + responseHolder[0]);
             return responseHolder[0];
         } catch (Exception e) {
             LOGGER.severe("Encryption failed: " + e.getMessage());
@@ -102,21 +106,28 @@ public abstract class BaseCommandGit extends BaseCommand {
         }
     }
 
-    protected String performFileDecryption(final InputStream encryptedFileStream,
+    protected String performFileDecryption(final File inputFile,
                                            final String outputDir) {
         LOGGER.fine("Initializing decryption and decompression");
 
-        try (PipedOutputStream decryptOutputStream = new PipedOutputStream();
+        try (PipedOutputStream streamWriterOutputStream = new PipedOutputStream();
+             PipedInputStream decryptInputStream = new PipedInputStream(streamWriterOutputStream);
+             PipedOutputStream decryptOutputStream = new PipedOutputStream();
              PipedInputStream unzipInputStream = new PipedInputStream(decryptOutputStream)) {
 
+            final CountDownLatch latch = new CountDownLatch(1);
+
             Thread streamWriterThread = new Thread(() -> {
-                    try {
+                    try (FileInputStream encryptedFileStream = new FileInputStream(inputFile)) {
                         byte[] buffer = new byte[4096]; // Buffer to store chunks of data
                         int bytesRead;
                         while ((bytesRead = encryptedFileStream.read(buffer)) != -1) {
-                            decryptOutputStream.write(buffer, 0, bytesRead); // Write to the piped output stream
+                            LOGGER.finest("bytesRead (streamWriter): " + bytesRead);
+                            streamWriterOutputStream.write(buffer, 0, bytesRead); // Write to the piped output stream
+                            streamWriterOutputStream.flush();
                         }
-                        decryptOutputStream.close(); // Close the output stream after writing all data
+                        streamWriterOutputStream.flush();
+                        LOGGER.finest("File reading and writing to the piped stream completed.");
                     } catch (IOException e) {
                         LOGGER.severe("Failed to write to piped output stream: " + e.getMessage());
                     }
@@ -127,7 +138,8 @@ public abstract class BaseCommandGit extends BaseCommand {
                     try {
                         aesStreamHandler.setAesKey(credentials.getAesKey());
                         aesStreamHandler.setIv(credentials.getIv());
-                        aesStreamHandler.decryptStream(encryptedFileStream, decryptOutputStream);
+                        aesStreamHandler.decryptStream(decryptInputStream, decryptOutputStream);
+                        //latch.countDown();
                         LOGGER.finest("Decryption complete, stream closed");
                     } catch (Exception e) {
                         LOGGER.severe("Decryption failed: " + e.getMessage());
@@ -137,20 +149,24 @@ public abstract class BaseCommandGit extends BaseCommand {
             Thread unzipThread = new Thread(() -> {
                     LOGGER.finest("Starting decompression thread");
                     try {
-                        fileUtils.unzipDirectoryStream(unzipInputStream, outputDir);
+                        latch.await();
+                        fileUtils.unzipDirectoryStream(unzipInputStream);
+                        decryptOutputStream.close(); 
                         LOGGER.finest("Unzipping complete, stream closed");
                     } catch (Exception e) {
                         LOGGER.severe("Decompression failed: " + e.getMessage());
                     }
             });
 
-            streamWriterThread.start();
+            //streamWriterThread.start();
             decryptThread.start();
             unzipThread.start();
 
-            streamWriterThread.join();
+            //streamWriterThread.join();
             decryptThread.join();
             unzipThread.join();
+
+            //latch.await();
 
             LOGGER.fine("Successfully decrypted and decompressed the file");
             return "Success";

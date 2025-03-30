@@ -88,13 +88,14 @@ public final class GitSocket {
                 LOGGER.fine("GitSocketResponseMap: " + responseMap.toString() + ", Command: " + inputLine.split(" ")[0]);
 
                 if (responseMap.containsKey(AppConfig.COMMAND_SUCCESS)) {
-                    out.println(AppConfig.COMMAND_SUCCESS);
+                    out.println(responseMap.toString());
                 } else {
                     out.println(responseMap.get(AppConfig.ERROR_KEY));
                 }
             }
         } catch (Exception e) {
             LOGGER.severe(e.getMessage());
+            e.printStackTrace();
         } finally {
             try {
                 clientSocket.close();

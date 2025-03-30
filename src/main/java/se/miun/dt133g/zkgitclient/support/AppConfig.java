@@ -106,8 +106,6 @@ public final class AppConfig {
 
     public static final String COMMAND_CLEAN = "CLEAN";
 
-    public static final String COMMAND_ASSEMBLY_REPO = "ASSEMBLY_REPO";
-
     public static final String COMMAND_RESEND_LAST_PACKAGE = "RESEND";
 
     public static final String COMMAND_REQUEST_USER_DELETE = "DELETE_USER";

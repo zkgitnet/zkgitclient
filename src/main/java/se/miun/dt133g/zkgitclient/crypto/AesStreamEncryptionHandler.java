@@ -2,6 +2,7 @@ package se.miun.dt133g.zkgitclient.crypto;
 
 import se.miun.dt133g.zkgitclient.user.CurrentUserRepo;
 import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
+import se.miun.dt133g.zkgitclient.support.Utils;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import javax.crypto.Cipher;
@@ -10,17 +11,23 @@ import javax.crypto.CipherOutputStream;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.File;
+import java.nio.file.Paths;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 public final class AesStreamEncryptionHandler implements StreamEncryptionHandler {
 
     private static AesStreamEncryptionHandler INSTANCE;
+    private Utils utils = Utils.getInstance();
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     private CurrentUserRepo currentRepo = CurrentUserRepo.getInstance();
@@ -50,29 +57,41 @@ public final class AesStreamEncryptionHandler implements StreamEncryptionHandler
         try {
             String operation = (mode == Cipher.ENCRYPT_MODE) ? "encryption" : "decryption";
             LOGGER.fine("Starting " + operation + " of repo");
+            LOGGER.finest("iv: " + Arrays.toString(utils.byteArrayToIntArray(iv)));
+            LOGGER.finest("aesKey: " + utils.hexToBase64(utils.bytesToHex(aesKey)));
 
             Cipher cipher = Cipher.getInstance(AppConfig.CRYPTO_AES_GCM);
             SecretKey secretKey = new SecretKeySpec(aesKey, AppConfig.CRYPTO_AES);
             GCMParameterSpec gcmSpec = new GCMParameterSpec(AppConfig.CRYPTO_AES_TAG_LENGTH, iv);
             cipher.init(mode, secretKey, gcmSpec);
 
-            byte[] buffer = new byte[8 * AppConfig.ONE_KB];
+            byte[] buffer = new byte[AppConfig.ONE_KB];
             int bytesRead;
 
             if (mode == Cipher.ENCRYPT_MODE) {
                 try (CipherOutputStream cipherOut = new CipherOutputStream(outputStream, cipher)) {
                     while ((bytesRead = inputStream.read(buffer)) != -1) {
-                        cipherOut.write(buffer, 0, bytesRead);
+                        cipherOut.write(buffer, 0, bytesRead);                        
                     }
                 }
             } else {
-                try (CipherInputStream cipherIn = new CipherInputStream(inputStream, cipher)) {
+                LOGGER.fine("Preparing to read encrypted input");
+
+                EncryptionHandler sha256Handler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_SHA_256);
+                File file = Paths.get(System.getProperty(AppConfig.JAVA_TMP),
+                                      sha256Handler.getOutput()).toFile();
+
+                FileInputStream fis = new FileInputStream(file);
+
+                LOGGER.fine("Initiating cipherIn");
+                try (CipherInputStream cipherIn = new CipherInputStream(fis, cipher)) {
                     while ((bytesRead = cipherIn.read(buffer)) != -1) {
                         outputStream.write(buffer, 0, bytesRead);
                     }
+                    LOGGER.fine("Decryption complete");
                 }
             }
-            outputStream.close();
+            //outputStream.close();
 
             LOGGER.fine("Completed " + operation + " of repo");
         } catch (Exception e) {

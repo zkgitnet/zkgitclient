@@ -7,6 +7,8 @@ import se.miun.dt133g.zkgitclient.support.AppConfig;
 import java.io.InputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -23,11 +25,19 @@ public final class GetRepoFile extends BaseCommandGit implements Command {
 
         LOGGER.info("Preparing to get repo file from remote server");
 
+        Map<String, String> responseMap = new HashMap<>();
         Map<String, String> infoResponse = extractResponseToMap(getRepoFileInfo.execute());
-        LOGGER.finest(infoResponse.get(AppConfig.DB_REPO_HASH));
-        currentRepo.setRepoSignature(infoResponse.get(AppConfig.DB_REPO_HASH));
+        LOGGER.finest("Remote Signature: " + infoResponse.get(AppConfig.DB_REPO_HASH));
+        LOGGER.finest("Current Signature: " + currentRepo.getRepoSignature());
         LOGGER.finest(infoResponse.get(AppConfig.DB_IV));
         credentials.setIv(infoResponse.get(AppConfig.DB_IV));
+
+        if (currentRepo.getRepoSignature().contains(infoResponse.get(AppConfig.DB_REPO_HASH))) {
+            responseMap.put(AppConfig.COMMAND_SUCCESS, AppConfig.STATUS_REPO_UPTODATE);
+            return utils.mapToString(responseMap);
+        } else {
+            currentRepo.setRepoSignature(infoResponse.get(AppConfig.DB_REPO_HASH));
+        }
 
         sha256Handler.setInput(currentRepo.getRepoName()
                                .replace(AppConfig.ZIP_SUFFIX, AppConfig.NONE));
@@ -56,7 +66,7 @@ public final class GetRepoFile extends BaseCommandGit implements Command {
                         LOGGER.severe("Could not retrieve input stream");
                     }
                     
-                    /*try (FileOutputStream fos = new FileOutputStream(file)) {
+                    try (FileOutputStream fos = new FileOutputStream(file)) {
                         byte[] buffer = new byte[4096]; // Buffer to store chunks of data
                         int bytesRead;
                         while ((bytesRead = fileStream.read(buffer)) != -1) {
@@ -64,11 +74,29 @@ public final class GetRepoFile extends BaseCommandGit implements Command {
                         }
                     } catch (Exception e) {
                         LOGGER.severe("Could not write file: " + e.getMessage());
-                        }*/
+                    }
 
-                    performFileDecryption(fileStream, AppConfig.JAVA_TMP + currentRepo.getRepoName());
+                    aesFileHandler.setInput(sha256Handler.getOutput());
+                    aesFileHandler.setAesKey(credentials.getAesKey());
+                    aesFileHandler.setIv(credentials.getIv());
+                    aesFileHandler.decrypt();
 
-                    return AppConfig.COMMAND_SUCCESS;
+                    File decryptedFile = new File(System.getProperty(AppConfig.JAVA_TMP), "test_repo2");
+                    try (FileInputStream decryptedInputStream = new FileInputStream(decryptedFile)) {
+                        LOGGER.finest("Starting decompression of decrypted file.");
+
+                        // Pass the decrypted file stream to unzipDirectoryStream
+                        fileUtils.unzipDirectoryStream(decryptedInputStream);
+
+                        LOGGER.finest("Decompression complete.");
+                    } catch (IOException e) {
+                        LOGGER.severe("Failed to read decrypted file or unzip: " + e.getMessage());
+                    }
+
+                    //performFileDecryption(file, AppConfig.JAVA_TMP + currentRepo.getRepoName());
+
+                    responseMap.put(AppConfig.COMMAND_SUCCESS, AppConfig.NONE);
+                    return utils.mapToString(responseMap);
                 })
             .orElse(AppConfig.NONE);
     }

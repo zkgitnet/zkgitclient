@@ -27,17 +27,17 @@ public final class SendRepoFile extends BaseCommandGit implements Command {
                     sha256Handler.setInput(currentRepo.getRepoName());
                     sha256Handler.encrypt();
 
+                    LOGGER.finest(currentRepo.getRepoSignature());
+
                     Map<String, String> postData = new HashMap<>();
                     postData.put(AppConfig.COMMAND_KEY,
-                                 AppConfig.COMMAND_ASSEMBLY_REPO);
+                                 AppConfig.COMMAND_TRANSFER_REPO);
                     postData.put(AppConfig.CREDENTIAL_ACCOUNT_NR,
                                  credentials.getAccountNumber());
                     postData.put(AppConfig.CREDENTIAL_USERNAME,
                                  credentials.getUsername());
                     postData.put(AppConfig.CREDENTIAL_ACCESS_TOKEN,
                                  credentials.getAccessToken());
-                    /*postData.put(AppConfig.NUM_CHUNKS,
-                      Integer.toString(fileNames.length));*/
                     postData.put(AppConfig.ENC_FILE_NAME,
                                  sha256Handler.getOutput());
                     postData.put(AppConfig.REPO_SIGNATURE,

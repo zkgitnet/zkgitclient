@@ -158,6 +158,7 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
             try (DataOutputStream request = new DataOutputStream(connection.getOutputStream())) {
                 // Add form fields
                 String postParamsString = buildPostParamsString(postParamData, boundary, LINE_FEED);
+                LOGGER.finest(postParamsString);
                 request.writeBytes(postParamsString);
 
                 // Add file data

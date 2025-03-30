@@ -47,12 +47,14 @@ public final class FileUtils {
         return INSTANCE;
     }
 
-    public void unzipDirectoryStream(InputStream inputStream, final String outputDir) {
+    public void unzipDirectoryStream(InputStream inputStream) {
+        String outputDir = System.getProperty(AppConfig.JAVA_TMP) + "/zkgit-tmp-" + currentRepo.getRepoName();
         try (ZipInputStream zipIn = new ZipInputStream(inputStream)) {
             LOGGER.fine("Starting decompression of repo");
             ZipEntry entry;
             while ((entry = zipIn.getNextEntry()) != null) {
                 Path filePath = Paths.get(outputDir, entry.getName());
+                //LOGGER.finest("Decompressing: " + outputDir + "/" + entry.getName());
                 if (entry.isDirectory()) {
                     Files.createDirectories(filePath);
                 } else {
