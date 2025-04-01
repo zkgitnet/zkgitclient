@@ -30,6 +30,7 @@ public abstract class BaseCommandGit extends BaseCommand {
     protected EncryptionHandler aesHandler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_AES);
     protected EncryptionHandler aesFileHandler = EncryptionFactory.getEncryptionHandler("fileAes");
     protected EncryptionHandler sha256Handler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_SHA_256);
+    protected EncryptionHandler ivHandler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_IV);
     protected FileUtils fileUtils = FileUtils.getInstance();
 
     protected Optional<String> performEncryption(final String input) {

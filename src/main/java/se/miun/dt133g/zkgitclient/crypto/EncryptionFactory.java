@@ -27,6 +27,8 @@ public final class EncryptionFactory {
                                                                    RsaSignatureHandler::getInstance,
                                                                    AppConfig.CRYPTO_SHA_256_FILE,
                                                                    Sha256HashFileHandler::getInstance,
+                                                                   AppConfig.CRYPTO_IV,
+                                                                   IvHandler::getInstance,
                                                                    "fileAes",
                                                                    AesFileEncryptionHandler::getInstance);
 

@@ -13,11 +13,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.cert.X509Certificate;
@@ -153,32 +155,35 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(1200000);
             connection.setDoOutput(true);
+            connection.setChunkedStreamingMode(65536); // Enable chunked mode for large file uploads
             connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
-            try (DataOutputStream request = new DataOutputStream(connection.getOutputStream())) {
+            try (BufferedOutputStream request = new BufferedOutputStream(connection.getOutputStream());
+                 BufferedInputStream bufferedFileStream = new BufferedInputStream(fileInputStream, 65536)) {
+
                 // Add form fields
                 String postParamsString = buildPostParamsString(postParamData, boundary, LINE_FEED);
                 LOGGER.finest(postParamsString);
-                request.writeBytes(postParamsString);
+                request.write(postParamsString.getBytes(StandardCharsets.UTF_8));
 
                 // Add file data
-                request.writeBytes("--" + boundary + LINE_FEED
-                                   + "Content-Disposition: form-data; name=\"file\"; filename=\"" + fileName + "\"" + LINE_FEED
-                                   + "Content-Type: " + URLConnection.guessContentTypeFromName(fileName) + LINE_FEED
-                                   + "Content-Transfer-Encoding: binary" + LINE_FEED + LINE_FEED);
+                request.write(("--" + boundary + LINE_FEED +
+                               "Content-Disposition: form-data; name=\"file\"; filename=\"" + fileName + "\"" + LINE_FEED +
+                               "Content-Type: " + URLConnection.guessContentTypeFromName(fileName) + LINE_FEED +
+                               "Content-Transfer-Encoding: binary" + LINE_FEED + LINE_FEED)
+                              .getBytes(StandardCharsets.UTF_8));
 
-                // Read from InputStream instead of FileInputStream
+                // Stream file data
                 byte[] buffer = new byte[65536];
                 int bytesRead;
-                while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                while ((bytesRead = bufferedFileStream.read(buffer)) != -1) {
+                    //LOGGER.finest("Transferred bytes of data: " + bytesRead);
                     request.write(buffer, 0, bytesRead);
                 }
 
-                // Close file input stream explicitly
-                fileInputStream.close();
-
                 // End of multipart/form-data
-                request.writeBytes(LINE_FEED + "--" + boundary + "--" + LINE_FEED);
+                request.write((LINE_FEED + "--" + boundary + "--" + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+                request.flush();
             }
 
             // Handle response
@@ -191,10 +196,11 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
                 return String.format("%s %s", AppConfig.ERROR_KEY, AppConfig.ERROR_CONNECTION);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe("File upload failed: " + e.getMessage());
             return String.format("%s %s", AppConfig.ERROR_KEY, AppConfig.ERROR_CONNECTION);
         }
     }
+
 
 
     private String buildPostParamsString(Map<String, String> postParamDataInput, String boundary, String lineFeed) {

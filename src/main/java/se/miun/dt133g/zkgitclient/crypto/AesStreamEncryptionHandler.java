@@ -71,6 +71,7 @@ public final class AesStreamEncryptionHandler implements StreamEncryptionHandler
             if (mode == Cipher.ENCRYPT_MODE) {
                 try (CipherOutputStream cipherOut = new CipherOutputStream(outputStream, cipher)) {
                     while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        //LOGGER.finest("Encryted bytes of data: " + bytesRead);
                         cipherOut.write(buffer, 0, bytesRead);                        
                     }
                 }

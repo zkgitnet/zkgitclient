@@ -76,21 +76,31 @@ public final class FileUtils {
     }
 
     public void zipDirectoryStream(final String sourceDirPath, OutputStream outputStream) {
+        Path sourceDir = Paths.get(sourceDirPath);
+
         try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
             LOGGER.fine("Starting repo compression");
-            Path sourceDir = Paths.get(sourceDirPath);
-            Files.walk(sourceDir).forEach(path -> {
-                    try {
-                        if (!Files.isDirectory(path)) {
-                            String entryName = sourceDir.relativize(path).toString();
+
+            Files.walk(sourceDir)
+                .filter(path -> !Files.isDirectory(path))
+                .forEach(path -> {
+                        String entryName = sourceDir.relativize(path).toString();
+                        //LOGGER.finest("Compressing: " + path);
+                        try (InputStream fileInputStream = Files.newInputStream(path)) {
                             zipOut.putNextEntry(new ZipEntry(entryName));
-                            Files.copy(path, zipOut);
+
+                            byte[] buffer = new byte[8192];
+                            int bytesRead;
+                            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                                zipOut.write(buffer, 0, bytesRead);
+                            }
+
                             zipOut.closeEntry();
+                        } catch (IOException e) {
+                            LOGGER.severe("Could not compress file: " + path + " - " + e.getMessage());
                         }
-                    } catch (Exception e) {
-                        LOGGER.severe("Could not compress repo file");
-                    }
-                });
+                    });
+
             zipOut.finish();
             LOGGER.fine("Finished repo compression");
         } catch (IOException e) {

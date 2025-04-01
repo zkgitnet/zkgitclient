@@ -206,6 +206,8 @@ public final class AppConfig {
 
     public static final int CRYPTO_PBKDF2_KEY_LENGTH = 256;
 
+    public static final String CRYPTO_IV = "IV";
+
     public static final String CRYPTO_RSA = "RSA";
 
     public static final String CRYPTO_RSA_OAEP = "RSA/ECB/OAEPWithSHA-512AndMGF1Padding";
@@ -266,6 +268,8 @@ public final class AppConfig {
     public static final String STATUS_LOGGED_IN = "Logged in";
 
     public static final String STATUS_REPO_UPTODATE = "upToDate";
+
+    public static final String STATUS_REPO_NEW = "newRepo";
 
     public static final String STATUS_NOT_LOGGED_IN = "Not logged in";
 
