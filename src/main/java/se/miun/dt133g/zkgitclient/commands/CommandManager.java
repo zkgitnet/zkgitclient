@@ -10,7 +10,6 @@ import se.miun.dt133g.zkgitclient.commands.login.DecryptAesKey;
 import se.miun.dt133g.zkgitclient.commands.login.GetLoginStatus;
 import se.miun.dt133g.zkgitclient.commands.git.SendRepoFile;
 import se.miun.dt133g.zkgitclient.commands.git.GetRepoFile;
-import se.miun.dt133g.zkgitclient.commands.git.GetRepoFileInfo;
 import se.miun.dt133g.zkgitclient.commands.files.CleanTmpFiles;
 import se.miun.dt133g.zkgitclient.commands.account.RequestAccountData;
 import se.miun.dt133g.zkgitclient.commands.account.RequestUserList;
@@ -27,12 +26,20 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+/**
+ * The {@code CommandManager} class is responsible for managing and executing various commands within the application.
+ * It stores a map of commands and handles their execution, response processing, and logging.
+ * @author Leif Rogell
+ */
 public final class CommandManager extends BaseCommand {
 
     public static final CommandManager INSTANCE = new CommandManager();
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private final Map<String, Command> commandMap = new HashMap<>();
 
+    /**
+     * Private constructor to initialize the command map with predefined commands.
+     */
     private CommandManager() {
         commandMap.put(AppConfig.COMMAND_REQUEST_LOGIN, new LoginRequest());
         commandMap.put(AppConfig.COMMAND_REQUEST_LOGOUT, new LogoutRequest());
@@ -53,6 +60,12 @@ public final class CommandManager extends BaseCommand {
         commandMap.put(AppConfig.COMMAND_REQUEST_REPO_DELETE, new RequestRepoDeletion());
     }
 
+    /**
+     * Executes the specified command and returns the latest response as a map of key-value pairs.
+     * It processes responses, logs relevant information, and manages command flow based on responses.
+     * @param commandName The name of the command to execute.
+     * @return A map containing the latest command response data.
+     */
     public Map<String, String> executeCommand(final String commandName) {
         Command command = commandMap.get(commandName);
         Map<String, String> latestResponseMap = new HashMap<>();
@@ -77,8 +90,8 @@ public final class CommandManager extends BaseCommand {
                 }
             }
 
-            if (latestResponseMap.containsKey(AppConfig.COMMAND_SUCCESS) ||
-                (latestResponseMap.containsKey(AppConfig.ERROR_KEY)
+            if (latestResponseMap.containsKey(AppConfig.COMMAND_SUCCESS)
+                || (latestResponseMap.containsKey(AppConfig.ERROR_KEY)
                  && !latestResponseMap.containsValue("Connection failure"))) {
                 ConnectionManager.INSTANCE.setServerConnectivity(true);
             }

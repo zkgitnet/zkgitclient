@@ -5,15 +5,19 @@ import se.miun.dt133g.zkgitclient.commands.CommandManager;
 import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 import se.miun.dt133g.zkgitclient.support.MenuItems;
-import se.miun.dt133g.zkgitclient.support.FileUtils;
 
-import java.util.Map;
-import java.util.Scanner;
 import java.util.List;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-public class MainMenu extends MenuMethods {
+/**
+ * MainMenu class handles the main menu operations and user interactions
+ * in the ZkGit client application.
+ * It displays the menu, executes corresponding actions based on user input,
+ * and manages user authentication, account data, and other operations.
+ * @author Leif Rogell
+ */
+public final class MainMenu extends MenuMethods {
 
     public static final MainMenu INSTANCE = new MainMenu();
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
@@ -21,13 +25,24 @@ public class MainMenu extends MenuMethods {
     private boolean connected = false;
     private boolean socket = false;
 
+    /**
+     * Private constructor to prevent instantiation.
+     */
     private MainMenu() { }
 
+    /**
+     * Displays the header of the main menu.
+     */
     public void displayHeader() {
         System.out.println(MenuItems.HEADER_ZKGIT);
     }
 
-    public void performAction(String choice) {
+    /**
+     * Performs the action corresponding to the user's choice.
+     * Valid choices are defined in the MenuItems class and correspond to specific actions.
+     * @param choice The user's choice from the menu.
+     */
+    public void performAction(final String choice) {
         switch (choice.replaceAll("\\s+", AppConfig.NONE).toUpperCase()) {
         case MenuItems.CHOICE_ONE -> handleUserCommands(choice);
         case MenuItems.CHOICE_TWO -> handleUserCommands(choice);
@@ -50,7 +65,11 @@ public class MainMenu extends MenuMethods {
         }
     }
 
-    private void handleUserCommands(String choice) {
+    /**
+     * Handles user commands such as login, logout, user generation, and other actions.
+     * @param choice The user's choice that determines which command to execute.
+     */
+    private void handleUserCommands(final String choice) {
         if (choice.equals(MenuItems.CHOICE_SEVEN)) {
             CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_GENERATE_USER);
         } else if (choice.equals(MenuItems.CHOICE_EIGHT)) {
@@ -70,6 +89,9 @@ public class MainMenu extends MenuMethods {
         }
     }
 
+    /**
+     * Displays the current status of the application, including login status and connection status.
+     */
     public void displayStatus() {
         System.out.println(MenuItems.HEADER_STATUS);
         String format = String.format(MenuItems.FORMAT_DISPLAY_STATUS,
@@ -96,6 +118,9 @@ public class MainMenu extends MenuMethods {
         }
     }
 
+    /**
+     * Displays the main menu with all available options for the user to choose from.
+     */
     public void displayMenu() {
         System.out.println(MenuItems.HEADER_MENU);
         String format = String.format(MenuItems.FORMAT_DISPLAY_MENU, MenuItems.COLUMN_WIDTH_MENU);
@@ -139,13 +164,18 @@ public class MainMenu extends MenuMethods {
         List<Integer> rowSeparation = Arrays.asList(2, 5, 10, 12, 14, 15);
 
         for (int i = 0; i < menuNumbers.size(); i++) {
-            if (rowSeparation.contains(i)) System.out.println();
+            if (rowSeparation.contains(i)) {
+                System.out.println();
+            }
             System.out.printf(format, menuNumbers.get(i), menuCommands.get(i));
         }
 
         System.out.print(AppConfig.NEW_LINE + MenuItems.PROMPT);
     }
-    
+
+    /**
+     * Exits the application, logs out the user, cleans temporary files, and clears user data.
+     */
     private void exitApplication() {
         CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_REQUEST_LOGOUT);
         fileUtils.cleanTmpFiles();

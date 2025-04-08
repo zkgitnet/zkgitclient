@@ -13,13 +13,16 @@ import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Comparator;
-import java.util.stream.Collectors;
 import java.util.logging.Logger;
 
+/**
+ * Abstract class providing common menu-related methods for handling user interaction,
+ * managing login status, connection checks, and displaying various menu options.
+ * @author Leif Rogell
+ */
 public abstract class MenuMethods {
 
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
@@ -28,13 +31,21 @@ public abstract class MenuMethods {
     protected Utils utils = Utils.getInstance();
     protected boolean login = false;
 
+    /**
+     * Prompts the user to confirm their choice (Yes/No).
+     * @return true if the user confirms with "Y", false otherwise.
+     */
     public boolean confirmChoice() {
         System.out.println(AppConfig.NEW_LINE + MenuItems.INFO_UNDO);
         System.out.print(MenuItems.PROMPT_CONFIRM);
         return new Scanner(System.in).nextLine().trim().toUpperCase().startsWith("Y");
     }
 
-    protected void checkLogin(boolean output) {
+    /**
+     * Checks the login status of the user and optionally outputs an error message if not logged in.
+     * @param output whether to display the login status to the user.
+     */
+    protected void checkLogin(final boolean output) {
         try {
             Map<String, String> loginStatus =
                 CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_LOGIN_STATUS);
@@ -51,12 +62,17 @@ public abstract class MenuMethods {
         }
     }
 
-    protected boolean displayConnectionStatus(String format) {
+    /**
+     * Displays the current internet and server connection status.
+     * @param format the format string for displaying connection information.
+     * @return true if the server is connected, false otherwise.
+     */
+    protected boolean displayConnectionStatus(final String format) {
         boolean internetConnection =
             ConnectionManager.INSTANCE.getInternetConnectivity();
         boolean serverConnection =
             ConnectionManager.INSTANCE.getServerConnectivity();
-        
+
         System.out.printf(format,
                           MenuItems.STATUS_CONNECTION,
                           internetConnection
@@ -67,7 +83,7 @@ public abstract class MenuMethods {
                           MenuItems.STATUS_ZKGIT_CONNECTION,
                           serverConnection
                           ? MenuItems.STATUS_AVAILABLE
-                          : MenuItems.STATUS_NOT_AVAILABLE);            
+                          : MenuItems.STATUS_NOT_AVAILABLE);
 
 
         if (internetConnection) {
@@ -83,7 +99,12 @@ public abstract class MenuMethods {
         return serverConnection;
     }
 
-    protected boolean displaySocketStatus(String format) {
+    /**
+     * Displays the status of the Git socket connection.
+     * @param format the format string for displaying socket connection information.
+     * @return true if the socket is connected, false otherwise.
+     */
+    protected boolean displaySocketStatus(final String format) {
         int port = ConnectionManager.INSTANCE.getGitPort();
         boolean socket = port != 0;
         System.out.printf(format,
@@ -94,16 +115,29 @@ public abstract class MenuMethods {
         return socket;
     }
 
-    protected String convertBytesToMb(String bytes) {
+    /**
+     * Converts bytes to megabytes (MB).
+     * @param bytes the number of bytes as a string.
+     * @return the corresponding value in MB as a string.
+     */
+    protected String convertBytesToMb(final String bytes) {
         return BigDecimal.valueOf(Integer.parseInt(bytes))
             .divide(BigDecimal.valueOf(1_000_000), 2, RoundingMode.HALF_UP)
             .toString();
     }
 
-    protected boolean canParseInt(String input) {
+    /**
+     * Checks if the input string can be parsed into an integer.
+     * @param input the string to be checked.
+     * @return true if the string is a valid integer, false otherwise.
+     */
+    protected boolean canParseInt(final String input) {
         return input.matches("-?\\d+");
     }
 
+    /**
+     * Prompts the user to export encryption keys (RSA or AES) and saves them to files.
+     */
     protected void exportEncryptionKeys() {
         Scanner scanner = new Scanner(System.in);
 
@@ -157,26 +191,31 @@ public abstract class MenuMethods {
         }
     }
 
+    /**
+     * Displays the account data of the currently logged-in user.
+     */
     protected void displayAccountData() {
         System.out.println(MenuItems.HEADER_ACCOUNT_DATA);
         String format =
             String.format(MenuItems.FORMAT_ACCOUNT_DATA, MenuItems.COLUMN_WIDTH_ACCOUNT_DATA);
- 
+
         checkLogin(true);
         if (!login) {
             return;
         }
- 
+
         Map<String, String> data =
             CommandManager.INSTANCE.executeCommand(AppConfig.COMMAND_REQUEST_ACCOUNT_DATA);
- 
+
         System.out.printf(format,
                           MenuItems.STATUS_ACCOUNT_NUMBER,
                           utils.formatWithSpace(credentials.getAccountNumber()));
- 
+
         String expDate = data.get(AppConfig.DB_REPO_EXP_DATE);
-        if (expDate != null) System.out.printf(format, MenuItems.STATUS_EXP_DATE, expDate);
- 
+        if (expDate != null) {
+            System.out.printf(format, MenuItems.STATUS_EXP_DATE, expDate);
+        }
+
         String totalUsers = data.get(AppConfig.DB_REPO_TOTAL_USERS);
         String maxUsers = data.get(AppConfig.DB_REPO_MAX_USERS);
         if (canParseInt(totalUsers) && canParseInt(maxUsers)) {
@@ -185,7 +224,7 @@ public abstract class MenuMethods {
                               totalUsers + MenuItems.OF_SEPARATOR
                               + maxUsers);
         }
- 
+
         String totalSize = data.get(AppConfig.DB_REPO_TOTAL_SIZE);
         String maxStorage = data.get(AppConfig.DB_REPO_MAX_STORAGE);
         if (canParseInt(totalSize) && canParseInt(maxStorage)) {
@@ -196,7 +235,7 @@ public abstract class MenuMethods {
                               + maxStorage
                               + " MB");
         }
- 
+
         String totalRepos = data.get(AppConfig.DB_REPO_TOTAL_REPOS);
         if (canParseInt(totalRepos)) {
             System.out.printf(format,
@@ -205,6 +244,9 @@ public abstract class MenuMethods {
         }
     }
 
+    /**
+     * Retrieves and displays the list of users from the server.
+     */
     protected void getUserList() {
         checkLogin(true);
 
@@ -219,7 +261,7 @@ public abstract class MenuMethods {
         for (Map.Entry<String, String> entry : userList.entrySet()) {
             System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue());
         }
-        
+
         if (userList.containsKey(AppConfig.ERROR_KEY)) {
             System.out.println(AppConfig.STATUS_NOT_ADMIN);
             return;
@@ -252,6 +294,9 @@ public abstract class MenuMethods {
                 });
     }
 
+    /**
+     * Retrieves and displays the list of repositories from the server.
+     */
     protected void getRepoList() {
         checkLogin(true);
 

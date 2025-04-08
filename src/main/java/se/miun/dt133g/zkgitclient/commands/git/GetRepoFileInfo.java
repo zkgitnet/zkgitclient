@@ -6,19 +6,32 @@ import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.logging.Logger;
 
+/**
+ * Command to retrieve file information of a repository from a remote server.
+ * It encrypts the repository name, generates a hash, and sends a request
+ * to retrieve the file details from the server.
+ * @author Leif Rogell
+ */
 public final class GetRepoFileInfo extends BaseCommandGit implements Command {
 
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private final String ERROR_MESSAGE = "{" + AppConfig.ERROR_KEY
         + "=" + AppConfig.STATUS_REPO_UPTODATE + ",}";
 
-    @Override public String execute() {
+    /**
+     * Executes the command to retrieve repository file information.
+     * This method performs encryption on the repository name, generates a SHA-256 hash
+     * of the repository name, and sends a POST request with the necessary data to
+     * retrieve file information from the remote server.
+     * @return a response from the server containing repository file information or an error message.
+     */
+    @Override
+    public String execute() {
 
         LOGGER.info("Preparing to retrieve repo file information from remote server");
-        
+
         return performEncryption(currentRepo.getRepoName())
             .map(encFileName -> {
                     Map<String, String> postData = new HashMap<>();
@@ -26,7 +39,7 @@ public final class GetRepoFileInfo extends BaseCommandGit implements Command {
                     sha256Handler.setInput(currentRepo.getRepoName()
                                            .replace(AppConfig.ZIP_SUFFIX, AppConfig.NONE));
                     sha256Handler.encrypt();
-                    
+
                     postData.put(AppConfig.COMMAND_KEY,
                                  AppConfig.COMMAND_REQUEST_REPO_INFO);
                     postData.put(AppConfig.CREDENTIAL_ACCOUNT_NR,

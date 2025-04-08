@@ -9,19 +9,21 @@ import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.FileUtils;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
-import java.io.InputStream;
-import java.io.BufferedInputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.FileInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
+/**
+ * Base class for Git-related commands, providing encryption utilities, file processing functions,
+ * and other common methods used by commands related to Git operations.
+ * @author Leif Rogell
+ */
 public abstract class BaseCommandGit extends BaseCommand {
 
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
@@ -33,6 +35,11 @@ public abstract class BaseCommandGit extends BaseCommand {
     protected EncryptionHandler ivHandler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_IV);
     protected FileUtils fileUtils = FileUtils.getInstance();
 
+    /**
+     * Encrypts a given input string using AES encryption and returns the encrypted file name.
+     * @param input the string to be encrypted
+     * @return an Optional containing the encrypted file name, or empty if encryption fails
+     */
     protected Optional<String> performEncryption(final String input) {
         try {
             aesHandler.setIv(credentials.getIv());
@@ -48,12 +55,21 @@ public abstract class BaseCommandGit extends BaseCommand {
         }
     }
 
+    /**
+     * Performs compression, encryption, and file transfer in separate threads.
+     * The method compresses a directory, encrypts the compressed file, and then sends the encrypted
+     * file via a post request.
+     * @param sourceDirPath the path of the source directory to be compressed
+     * @param postData the data to be sent in the post request
+     * @param fileName the name of the file being encrypted and transferred
+     * @return a response indicating success or failure of the operation
+     */
     protected String performFileEncryption(final String sourceDirPath,
                                            final Map<String, String> postData,
                                            final String fileName) {
 
         LOGGER.fine("Initializing compression and encryption of the repo");
-        
+
         try (PipedOutputStream zipOutputStream = new PipedOutputStream();
              PipedInputStream encryptInputStream = new PipedInputStream(zipOutputStream);
              PipedOutputStream encryptOutputStream = new PipedOutputStream();
@@ -107,6 +123,13 @@ public abstract class BaseCommandGit extends BaseCommand {
         }
     }
 
+    /**
+     * Decrypts a file, decompresses it, and saves the result in a specified output directory.
+     * This method reads an encrypted file, decrypts it, and then decompresses the resulting data.
+     * @param inputFile the encrypted file to be decrypted
+     * @param outputDir the directory to save the decompressed files
+     * @return a response indicating success or failure of the operation
+     */
     protected String performFileDecryption(final File inputFile,
                                            final String outputDir) {
         LOGGER.fine("Initializing decryption and decompression");
@@ -120,11 +143,11 @@ public abstract class BaseCommandGit extends BaseCommand {
 
             Thread streamWriterThread = new Thread(() -> {
                     try (FileInputStream encryptedFileStream = new FileInputStream(inputFile)) {
-                        byte[] buffer = new byte[4096]; // Buffer to store chunks of data
+                        byte[] buffer = new byte[4 * AppConfig.ONE_KB];
                         int bytesRead;
                         while ((bytesRead = encryptedFileStream.read(buffer)) != -1) {
                             LOGGER.finest("bytesRead (streamWriter): " + bytesRead);
-                            streamWriterOutputStream.write(buffer, 0, bytesRead); // Write to the piped output stream
+                            streamWriterOutputStream.write(buffer, 0, bytesRead);
                             streamWriterOutputStream.flush();
                         }
                         streamWriterOutputStream.flush();
@@ -152,7 +175,7 @@ public abstract class BaseCommandGit extends BaseCommand {
                     try {
                         latch.await();
                         fileUtils.unzipDirectoryStream(unzipInputStream);
-                        decryptOutputStream.close(); 
+                        decryptOutputStream.close();
                         LOGGER.finest("Unzipping complete, stream closed");
                     } catch (Exception e) {
                         LOGGER.severe("Decompression failed: " + e.getMessage());
@@ -176,5 +199,4 @@ public abstract class BaseCommandGit extends BaseCommand {
             return AppConfig.ERROR_KEY;
         }
     }
-
 }

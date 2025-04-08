@@ -14,16 +14,17 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.nio.file.Paths;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+/**
+ * A singleton class that handles AES stream encryption and decryption.
+ * This class provides methods for encrypting and decrypting streams using AES encryption in GCM mode.
+ * It processes the data in chunks, ensuring that large files can be handled efficiently.
+ * @author Leif Rogell
+ */
 public final class AesStreamEncryptionHandler implements StreamEncryptionHandler {
 
     private static AesStreamEncryptionHandler INSTANCE;
@@ -34,8 +35,15 @@ public final class AesStreamEncryptionHandler implements StreamEncryptionHandler
     private byte[] aesKey;
     private byte[] iv;
 
+    /**
+     * Private constructor to prevent instatiation.
+     */
     private AesStreamEncryptionHandler() { }
 
+    /**
+     * Returns the singleton instance of the AesStreamEncryptionHandler.
+     * @return the singleton instance of AesStreamEncryptionHandler.
+     */
     public static synchronized AesStreamEncryptionHandler getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new AesStreamEncryptionHandler();
@@ -43,17 +51,42 @@ public final class AesStreamEncryptionHandler implements StreamEncryptionHandler
         return INSTANCE;
     }
 
+    /**
+     * Encrypts the input stream and writes the result to the output stream.
+     * This method reads data from the input stream, encrypts it using AES GCM, and writes the encrypted data
+     * to the output stream.
+     * @param inputStream the input stream to be encrypted.
+     * @param outputStream the output stream to write the encrypted data.
+     */
     @Override
-    public void encryptStream(InputStream inputStream, OutputStream outputStream) {
+    public void encryptStream(final InputStream inputStream,
+                              final OutputStream outputStream) {
         processStream(Cipher.ENCRYPT_MODE, inputStream, outputStream);
     }
 
+    /**
+     * Decrypts the input stream and writes the result to the output stream.
+     * This method reads encrypted data from the input stream, decrypts it using AES GCM, and writes the decrypted
+     * data to the output stream.
+     * @param inputStream the input stream containing encrypted data.
+     * @param outputStream the output stream to write the decrypted data.
+     */
     @Override
-    public void decryptStream(InputStream inputStream, OutputStream outputStream) {
+    public void decryptStream(final InputStream inputStream,
+                              final OutputStream outputStream) {
         processStream(Cipher.DECRYPT_MODE, inputStream, outputStream);
     }
 
-    private void processStream(int mode, InputStream inputStream, OutputStream outputStream) {
+    /**
+     * Processes the input stream for encryption or decryption.
+     * This method is used by both the encrypt and decrypt methods to handle the stream processing logic.
+     * @param mode the cipher mode (encryption or decryption).
+     * @param inputStream the input stream to process.
+     * @param outputStream the output stream to write the result.
+     */
+    private void processStream(final int mode,
+                               final InputStream inputStream,
+                               final OutputStream outputStream) {
         try {
             String operation = (mode == Cipher.ENCRYPT_MODE) ? "encryption" : "decryption";
             LOGGER.fine("Starting " + operation + " of repo");
@@ -71,8 +104,7 @@ public final class AesStreamEncryptionHandler implements StreamEncryptionHandler
             if (mode == Cipher.ENCRYPT_MODE) {
                 try (CipherOutputStream cipherOut = new CipherOutputStream(outputStream, cipher)) {
                     while ((bytesRead = inputStream.read(buffer)) != -1) {
-                        //LOGGER.finest("Encryted bytes of data: " + bytesRead);
-                        cipherOut.write(buffer, 0, bytesRead);                        
+                        cipherOut.write(buffer, 0, bytesRead);
                     }
                 }
             } else {
@@ -96,16 +128,25 @@ public final class AesStreamEncryptionHandler implements StreamEncryptionHandler
 
             LOGGER.fine("Completed " + operation + " of repo");
         } catch (Exception e) {
-            LOGGER.severe("Could not " + ((mode == Cipher.ENCRYPT_MODE) ? "encrypt" : "decrypt") + " repo: " + e.getMessage());
+            LOGGER.severe("Could not " + ((mode == Cipher.ENCRYPT_MODE)
+                                          ? "encrypt" : "decrypt") + " repo: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
+    /**
+     * Sets the AES key for encryption and decryption.
+     * @param aesKey the AES key to use for encryption and decryption.
+     */
     @Override
     public void setAesKey(final byte[] aesKey) {
         this.aesKey = aesKey;
     }
 
+    /**
+     * Sets the initialization vector (IV) for encryption and decryption.
+     * @param iv the IV to use for encryption and decryption.
+     */
     @Override
     public void setIv(final byte[] iv) {
         this.iv = iv;

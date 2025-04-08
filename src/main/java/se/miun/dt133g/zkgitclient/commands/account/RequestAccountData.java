@@ -9,12 +9,25 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+/**
+ * Handles the request for retrieving user account data from the server.
+ * This command checks if a valid access token is available and then
+ * sends a POST request to fetch account-related information.
+ * @author Leif Rogell
+ */
 public final class RequestAccountData extends BaseCommandAccount implements Command {
 
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
     private final String ERROR_MESSAGE = "Could not fetch account data";
 
-    @Override public String execute() {
+    /**
+     * Executes the command to fetch account data.
+     * If a valid access token is present, prepares the request data and sends it
+     * to the server. Otherwise, returns an error response.
+     * @return A JSON string containing account data or an error message.
+     */
+    @Override
+    public String execute() {
         return Optional.of(conn.getServerConnectivity())
             .filter(valid -> credentials.hasAccessToken())
             .map(valid -> {

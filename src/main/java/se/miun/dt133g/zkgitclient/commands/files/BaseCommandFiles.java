@@ -9,6 +9,11 @@ import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.util.logging.Logger;
 
+/**
+ * Abstract base class for file-related commands in the ZkGit client.
+ * Provides shared utilities for file operations and AES encryption used across file commands.
+ * @author Leif Rogell
+ */
 public abstract class BaseCommandFiles extends BaseCommand {
 
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());

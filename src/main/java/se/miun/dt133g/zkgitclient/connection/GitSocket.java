@@ -14,6 +14,12 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
+/**
+ * Manages the Git server socket, handling client connections and executing Git commands.
+ * Provides methods for starting, stopping, and configuring the server, as well as handling
+ * client requests and interacting with the CommandManager.
+ * @author Leif Rogell
+ */
 public final class GitSocket {
 
     public static GitSocket INSTANCE = new GitSocket();
@@ -25,10 +31,17 @@ public final class GitSocket {
     private ServerSocket serverSocket;
     private Thread serverThread;
 
+    /**
+     * Default constructor initializing the server with the default port.
+     */
     private GitSocket() {
         this(AppConfig.GIT_PORT);
     }
 
+    /**
+     * Constructor initializing the server with a specified port.
+     * @param port the port number for the Git server to listen on.
+     */
     private GitSocket(final int port) {
         this.port = port;
         LOGGER.config("Setting Git Port: " + port);
@@ -36,6 +49,10 @@ public final class GitSocket {
         serverThread.start();
     }
 
+    /**
+     * Starts the server and listens for incoming client connections. Each client connection
+     * is handled in a new thread. If the server is interrupted, it stops accepting new clients.
+     */
     private void startServer() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             this.serverSocket = serverSocket;
@@ -60,6 +77,10 @@ public final class GitSocket {
         }
     }
 
+    /**
+     * Restarts the server with a new port.
+     * @param newPort the new port number to set for the server.
+     */
     protected synchronized void restartServer(final int newPort) {
         if (INSTANCE != null) {
             stopServer();
@@ -67,6 +88,11 @@ public final class GitSocket {
         INSTANCE = new GitSocket(newPort);
     }
 
+    /**
+     * Handles incoming client connections, processes Git commands, and sends the response back
+     * to the client. Commands are parsed and executed using the CommandManager.
+     * @param clientSocket the client socket for communication.
+     */
     private void handleClient(final Socket clientSocket) {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
@@ -76,7 +102,8 @@ public final class GitSocket {
                 LOGGER.finest("Received command: " + inputLine);
                 String[] inputItems = inputLine.split(AppConfig.SPACE_SEPARATOR);
                 if (inputItems.length > 1) {
-                    CurrentUserRepo.getInstance().setRepoName(inputItems[1].substring(inputItems[1].lastIndexOf("/") + 1));
+                    CurrentUserRepo.getInstance()
+                        .setRepoName(inputItems[1].substring(inputItems[1].lastIndexOf("/") + 1));
                     CurrentUserRepo.getInstance().setRepoPath(inputItems[1]);
                     if (inputItems.length > 2) {
                         CurrentUserRepo.getInstance().setRepoSignature(inputItems[2]);
@@ -85,7 +112,8 @@ public final class GitSocket {
                 Map<String, String> responseMap = new HashMap<>();
                 responseMap = CommandManager.INSTANCE.executeCommand(inputItems[0]);
 
-                LOGGER.fine("GitSocketResponseMap: " + responseMap.toString() + ", Command: " + inputLine.split(" ")[0]);
+                LOGGER.fine("GitSocketResponseMap: " + responseMap.toString()
+                            + ", Command: " + inputLine.split(" ")[0]);
 
                 if (responseMap.containsKey(AppConfig.COMMAND_SUCCESS)) {
                     out.println(responseMap.toString());
@@ -105,6 +133,9 @@ public final class GitSocket {
         }
     }
 
+    /**
+     * Stops the server and closes any open server socket and associated threads.
+     */
     protected void stopServer() {
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
@@ -118,11 +149,19 @@ public final class GitSocket {
         }
     }
 
+    /**
+     * Returns the current port the Git server is listening on.
+     * @return the current Git server port.
+     */
     protected int getGitPort() {
         return port;
     }
 
-    protected void setGitPort(int port) {
+    /**
+     * Sets a new port for the Git server and restarts it.
+     * @param port the new port number to set for the server.
+     */
+    protected void setGitPort(final int port) {
         this.port = port;
         LOGGER.config("Setting Git Port: " + port);
         startServer();

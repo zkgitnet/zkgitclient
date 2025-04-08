@@ -6,13 +6,24 @@ import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.util.logging.Logger;
 
+/**
+ * Command to decrypt the AES key using the user's private RSA key.
+ * This class handles the decryption of the AES key required for encryption operations.
+ * @author Leif Rogell
+ */
 public final class DecryptAesKey extends BaseCommandLogin implements Command {
 
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
-    @Override public String execute() {
+    /**
+     * Executes the decryption of the AES key using the RSA decryption method.
+     * The private RSA key is used to decrypt the encrypted AES key, and the AES key is set to the credentials.
+     * @return the decrypted AES key.
+     */
+    @Override
+    public String execute() {
         LOGGER.info("Decrypting AES Key");
-        
+
         rsaHandler.setRsaKey(credentials.getPrivRsa());
         rsaHandler.setInput(credentials.getEncAesKey());
         rsaHandler.decrypt();

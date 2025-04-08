@@ -20,6 +20,13 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.logging.Logger;
 
+/**
+ * A handler for RSA encryption and decryption using the OAEP (Optimal Asymmetric Encryption Padding) scheme.
+ * This class handles encryption and decryption operations using RSA keys,
+ * which are provided in JWK (JSON Web Key) format.
+ * It supports both encryption with a public key and decryption with a private key.
+ * @author Leif Rogell
+ */
 public final class RsaEncryptionHandler implements EncryptionHandler {
 
     private static RsaEncryptionHandler INSTANCE;
@@ -31,8 +38,16 @@ public final class RsaEncryptionHandler implements EncryptionHandler {
     private byte[] aesKey;
     private byte[] iv;
 
+    /**
+     * Private constructor to prevent instantiation.
+     */
     private RsaEncryptionHandler() { }
 
+    /**
+     * Returns the singleton instance of the RsaEncryptionHandler.
+     * This method ensures that only one instance of RsaEncryptionHandler is used throughout the application.
+     * @return the singleton instance of RsaEncryptionHandler.
+     */
     public static RsaEncryptionHandler getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new RsaEncryptionHandler();
@@ -40,13 +55,21 @@ public final class RsaEncryptionHandler implements EncryptionHandler {
         return INSTANCE;
     }
 
-    @Override public void encrypt() {
+    /**
+     * Encrypts the input string using RSA public key encryption with OAEP padding.
+     * This method loads the public key from the provided JWK, initializes the cipher, and performs encryption.
+     * The result is encoded in Base64 and stored in the output field.
+     */
+    @Override
+    public void encrypt() {
         try {
             PublicKey publicKey = loadPublicKey();
             Cipher cipher = Cipher.getInstance(AppConfig.CRYPTO_RSA_OAEP);
-            cipher.init(Cipher.ENCRYPT_MODE, publicKey, new OAEPParameterSpec(
-                                                                              AppConfig.CRYPTO_SHA_512, AppConfig.CRYPTO_MGF1, MGF1ParameterSpec.SHA512, PSource.PSpecified.DEFAULT
-                                                                              ));
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey,
+                        new OAEPParameterSpec(AppConfig.CRYPTO_SHA_512,
+                                              AppConfig.CRYPTO_MGF1,
+                                              MGF1ParameterSpec.SHA512,
+                                              PSource.PSpecified.DEFAULT));
 
             byte[] encryptedBytes = cipher.doFinal(input.getBytes());
             output = Base64.getEncoder().encodeToString(encryptedBytes);
@@ -56,13 +79,21 @@ public final class RsaEncryptionHandler implements EncryptionHandler {
         }
     }
 
-    @Override public void decrypt() {
+    /**
+     * Decrypts the input string using RSA private key decryption with OAEP padding.
+     * This method loads the private key from the provided JWK, initializes the cipher, and performs decryption.
+     * The result is stored as a string in the output field.
+     */
+    @Override
+    public void decrypt() {
         try {
             PrivateKey privateKey = loadPrivateKey();
             Cipher cipher = Cipher.getInstance(AppConfig.CRYPTO_RSA_OAEP);
-            cipher.init(Cipher.DECRYPT_MODE, privateKey, new OAEPParameterSpec(
-                                                                               AppConfig.CRYPTO_SHA_512, AppConfig.CRYPTO_MGF1, MGF1ParameterSpec.SHA512, PSource.PSpecified.DEFAULT
-                                                                               ));
+            cipher.init(Cipher.DECRYPT_MODE, privateKey,
+                        new OAEPParameterSpec(AppConfig.CRYPTO_SHA_512,
+                                              AppConfig.CRYPTO_MGF1,
+                                              MGF1ParameterSpec.SHA512,
+                                              PSource.PSpecified.DEFAULT));
 
             byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(input));
             output = new String(decryptedBytes);
@@ -71,6 +102,13 @@ public final class RsaEncryptionHandler implements EncryptionHandler {
         }
     }
 
+    /**
+     * Loads and constructs a private key from the provided JWK string.
+     * This method decodes the components of the RSA private key from the JWK and constructs an RSAPrivateCrtKeySpec,
+     * which is then used to generate the private key.
+     * @return the RSA private key.
+     * @throws Exception if the JWK cannot be parsed or the key cannot be generated.
+     */
     private PrivateKey loadPrivateKey() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, String> jwk = mapper.readValue(rsaKey, Map.class);
@@ -84,13 +122,26 @@ public final class RsaEncryptionHandler implements EncryptionHandler {
         BigInteger primeExponentQ = decodeBase64ToBigInt(jwk.get(AppConfig.RSA_DQ));
         BigInteger crtCoefficient = decodeBase64ToBigInt(jwk.get(AppConfig.RSA_QI));
 
-        RSAPrivateCrtKeySpec keySpec = new RSAPrivateCrtKeySpec(
-                                                                modulus, publicExponent, privateExponent, primeP, primeQ, primeExponentP, primeExponentQ, crtCoefficient);
+        RSAPrivateCrtKeySpec keySpec = new RSAPrivateCrtKeySpec(modulus,
+                                                                publicExponent,
+                                                                privateExponent,
+                                                                primeP,
+                                                                primeQ,
+                                                                primeExponentP,
+                                                                primeExponentQ,
+                                                                crtCoefficient);
 
         KeyFactory keyFactory = KeyFactory.getInstance(AppConfig.CRYPTO_RSA);
         return keyFactory.generatePrivate(keySpec);
     }
 
+    /**
+     * Loads and constructs a public key from the provided JWK string.
+     * This method decodes the components of the RSA public key from the JWK and constructs an RSAPublicKeySpec,
+     * which is then used to generate the public key.
+     * @return the RSA public key.
+     * @throws Exception if the JWK cannot be parsed or the key cannot be generated.
+     */
     private PublicKey loadPublicKey() throws Exception {
         try {
             Map<String, String> jwkMap = new ObjectMapper().readValue(rsaKey, Map.class);
@@ -109,27 +160,58 @@ public final class RsaEncryptionHandler implements EncryptionHandler {
         }
     }
 
+    /**
+     * Decodes a Base64 encoded string into a BigInteger.
+     * This method is used to decode the Base64 encoded components of the RSA keys into BigInteger values.
+     * @param base64 the Base64 encoded string.
+     * @return the decoded BigInteger.
+     */
     private BigInteger decodeBase64ToBigInt(final String base64) {
         return new BigInteger(1, Base64.getUrlDecoder().decode(base64));
     }
 
-    @Override public void setInput(final String input) {
+    /**
+     * Sets the input string for encryption or decryption.
+     * @param input the input string to be encrypted or decrypted.
+     */
+    @Override
+    public void setInput(final String input) {
         this.input = input;
     }
 
-    @Override public void setAesKey(final byte[] aesKey) {
+    /**
+     * Sets the AES key for this handler (unused in RSA encryption).
+     * @param aesKey the AES key.
+     */
+    @Override
+    public void setAesKey(final byte[] aesKey) {
         this.aesKey = aesKey;
     }
 
-    @Override public void setRsaKey(final String rsaKey) {
+    /**
+     * Sets the RSA key (either public or private) for this handler.
+     * @param rsaKey the RSA key in JWK format.
+     */
+    @Override
+    public void setRsaKey(final String rsaKey) {
         this.rsaKey = rsaKey;
     }
 
-    @Override public void setIv(final byte[] iv) {
+    /**
+     * Sets the AES initialization vector (IV) for this handler (unused in RSA encryption).
+     * @param iv the initialization vector (IV).
+     */
+    @Override
+    public void setIv(final byte[] iv) {
         this.iv = iv;
     }
 
-    @Override public String getOutput() {
+    /**
+     * Retrieves the output of the encryption or decryption process.
+     * @return the output string, which contains the result of encryption or decryption.
+     */
+    @Override
+    public String getOutput() {
         return output;
     }
 }

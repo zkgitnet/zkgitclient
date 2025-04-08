@@ -10,11 +10,23 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+/**
+ * Command to initiate the login process.
+ * This class checks the current login status and prompts the user for necessary credentials
+ * if the login is not already valid.
+ * @author Leif Rogell
+ */
 public final class LoginRequest extends BaseCommandLogin implements Command {
 
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
-    @Override public String execute() {
+    /**
+     * Executes the login process.
+     * It checks the current login status and either initiates the login process or returns a logged-in status.
+     * @return the login status or an error message if the connection is unavailable.
+     */
+    @Override
+    public String execute() {
 
         if (conn.getServerConnectivity()) {
 
@@ -32,6 +44,11 @@ public final class LoginRequest extends BaseCommandLogin implements Command {
         }
     }
 
+    /**
+     * Handles the login process by prompting the user for their account number, username, and TOTP.
+     * If all inputs are valid, a POST request is sent to get the TOTP.
+     * @return the result of sending the POST request or an exit command if invalid inputs are provided.
+     */
     private String handleLoginProcess() {
         return Optional.of(readUserInput(AppConfig.INFO_ENTER_ACCOUNT_NUMBER,
                               AppConfig.INFO_INVALID_ACCOUNT_NUMBER_INPUT,

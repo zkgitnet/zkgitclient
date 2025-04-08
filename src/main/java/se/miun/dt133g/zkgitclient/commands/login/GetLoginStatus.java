@@ -9,15 +9,26 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+/**
+ * Command to retrieve the current login status from the remote server.
+ * It validates the access token and returns the server's response regarding the login status.
+ * @author Leif Rogell
+ */
 public final class GetLoginStatus extends BaseCommandLogin implements Command {
 
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
-    @Override public String execute() {
-        
+    /**
+     * Executes the command to retrieve the current login status.
+     * It checks if the access token is available and valid before sending a request to the server.
+     * @return the server's response regarding the login status, or an error message if invalid.
+     */
+    @Override
+    public String execute() {
+
         Map<String, String> postData = new HashMap<>();
         LOGGER.info("Retrieving current login status");
-        
+
         return Optional.ofNullable(conn.getServerConnectivity())
             .filter(valid -> credentials.hasAccessToken())
             .map(valid -> {

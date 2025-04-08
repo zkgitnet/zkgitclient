@@ -4,28 +4,24 @@ import se.miun.dt133g.zkgitclient.user.UserCredentials;
 import se.miun.dt133g.zkgitclient.user.CurrentUserRepo;
 import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 
-import java.io.BufferedOutputStream;
-import java.io.RandomAccessFile;
 import java.io.IOException;
-import java.io.FileOutputStream;
-import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.stream.IntStream;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipInputStream;
 
+/**
+ * Utility class for handling file operations such as unzipping, zipping, saving files,
+ * and cleaning temporary files.
+ * This class follows the Singleton pattern to provide a single instance for file operations.
+ * @author Leif Rogell
+ */
 public final class FileUtils {
 
     private static FileUtils INSTANCE;
@@ -34,8 +30,15 @@ public final class FileUtils {
     private UserCredentials credentials = UserCredentials.getInstance();
     private CurrentUserRepo currentRepo = CurrentUserRepo.getInstance();
 
+    /**
+     * Private constructor to prevent instantiation.
+     */
     private FileUtils() { }
 
+    /**
+     * Returns the singleton instance of FileUtils.
+     * @return the FileUtils instance.
+     */
     public static FileUtils getInstance() {
         if (INSTANCE == null) {
             synchronized (FileUtils.class) {
@@ -47,20 +50,23 @@ public final class FileUtils {
         return INSTANCE;
     }
 
-    public void unzipDirectoryStream(InputStream inputStream) {
+    /**
+     * Unzips a directory from an input stream and saves the extracted files to a temporary location.
+     * @param inputStream the input stream containing the zip data.
+     */
+    public void unzipDirectoryStream(final InputStream inputStream) {
         String outputDir = System.getProperty(AppConfig.JAVA_TMP) + "/zkgit-tmp-" + currentRepo.getRepoName();
         try (ZipInputStream zipIn = new ZipInputStream(inputStream)) {
             LOGGER.fine("Starting decompression of repo");
             ZipEntry entry;
             while ((entry = zipIn.getNextEntry()) != null) {
                 Path filePath = Paths.get(outputDir, entry.getName());
-                //LOGGER.finest("Decompressing: " + outputDir + "/" + entry.getName());
                 if (entry.isDirectory()) {
                     Files.createDirectories(filePath);
                 } else {
                     Files.createDirectories(filePath.getParent());
                     try (OutputStream fileOut = Files.newOutputStream(filePath)) {
-                        byte[] buffer = new byte[8 * AppConfig.ONE_KB];
+                        byte[] buffer = new byte[64 * AppConfig.ONE_KB];
                         int bytesRead;
                         while ((bytesRead = zipIn.read(buffer)) != -1) {
                             fileOut.write(buffer, 0, bytesRead);
@@ -75,76 +81,44 @@ public final class FileUtils {
         }
     }
 
-    public void zipDirectoryStream(final String sourceDirPath, OutputStream outputStream) {
+    /**
+     * Compresses a directory into a GZIP stream and writes it to the given output stream.
+     * @param sourceDirPath the path of the directory to compress.
+     * @param outputStream the output stream to write the compressed data to.
+     */
+    public void zipDirectoryStream(final String sourceDirPath,
+                                   final OutputStream outputStream) {
         Path sourceDir = Paths.get(sourceDirPath);
 
-        try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
-            LOGGER.fine("Starting repo compression");
+        try (GZIPOutputStream gzipOut = new GZIPOutputStream(outputStream)) {
+            LOGGER.fine("Starting repo compression: " + sourceDirPath);
 
             Files.walk(sourceDir)
                 .filter(path -> !Files.isDirectory(path))
                 .forEach(path -> {
                         String entryName = sourceDir.relativize(path).toString();
-                        //LOGGER.finest("Compressing: " + path);
                         try (InputStream fileInputStream = Files.newInputStream(path)) {
-                            zipOut.putNextEntry(new ZipEntry(entryName));
-
-                            byte[] buffer = new byte[8192];
+                            gzipOut.write(("File: " + entryName + "\n").getBytes());
+                            byte[] buffer = new byte[AppConfig.SIXFIVE_KB];
                             int bytesRead;
                             while ((bytesRead = fileInputStream.read(buffer)) != -1) {
-                                zipOut.write(buffer, 0, bytesRead);
+                                gzipOut.write(buffer, 0, bytesRead);
                             }
-
-                            zipOut.closeEntry();
                         } catch (IOException e) {
                             LOGGER.severe("Could not compress file: " + path + " - " + e.getMessage());
                         }
                     });
-
-            zipOut.finish();
             LOGGER.fine("Finished repo compression");
         } catch (IOException e) {
             LOGGER.severe("Could not compress repo: " + e.getMessage());
         }
     }
 
-    public String[] splitFile(final String fileName) {
-        Path tempDir = Paths.get(System.getProperty(AppConfig.JAVA_TMP), fileName + AppConfig.PARTS_SUFFIX);
-        Path sourceFile = Paths.get(System.getProperty(AppConfig.JAVA_TMP), fileName);
-        List<String> chunkFileNames = new ArrayList<>();
-
-        if (Files.notExists(tempDir)) {
-            try {
-                Files.createDirectories(tempDir);
-            } catch (IOException e) {
-                System.err.println(AppConfig.ERROR_CREATE_DIR + e.getMessage());
-                return chunkFileNames.toArray(new String[0]);
-            }
-        }
-
-        try (RandomAccessFile raf = new RandomAccessFile(sourceFile.toFile(), AppConfig.FILE_READ_MODE)) {
-            long fileSize = raf.length();
-            int chunkCount = (int) Math.ceil((double) fileSize / AppConfig.CHUNK_SIZE);
-            byte[] buffer = new byte[AppConfig.CHUNK_SIZE];
-
-            IntStream.range(0, chunkCount).forEach(i -> {
-                    Path chunkFile = tempDir.resolve(fileName + AppConfig.PART_SUFFIX + (i + 1));
-                    try (FileOutputStream fos = new FileOutputStream(chunkFile.toFile())) {
-                        int bytesRead = raf.read(buffer);
-                        fos.write(buffer, 0, bytesRead);
-                    } catch (IOException e) {
-                        System.err.println(AppConfig.ERROR_WRITE_FILE + (i + 1) + ": " + e.getMessage());
-                    }
-                    chunkFileNames.add(chunkFile.toString());
-                });
-
-        } catch (IOException e) {
-            System.err.println(AppConfig.ERROR_WRITE_FILE + e.getMessage());
-        }
-
-        return chunkFileNames.toArray(new String[0]);
-    }
-
+    /**
+     * Saves a string of data to a file in the system's temporary directory.
+     * @param data the data to be saved to the file.
+     * @param fileName the name of the file to save the data in.
+     */
     public void saveStringToFile(final String data, final String fileName) {
         Path filePath = Paths.get(System.getProperty(AppConfig.JAVA_TMP), fileName);
 
@@ -156,6 +130,9 @@ public final class FileUtils {
         }
     }
 
+    /**
+     * Cleans up temporary files related to the current repository by deleting specific files and directories.
+     */
     public void cleanTmpFiles() {
         try {
             if (currentRepo != null) {
@@ -172,12 +149,13 @@ public final class FileUtils {
                 LOGGER.finest("Deleting current tmp repo");
             }
         } catch (Exception e) {
-            LOGGER.warning("Could not delete current tmp repo");            
+            LOGGER.warning("Could not delete current tmp repo");
         }
 
         try {
             deleteDirectoryAndContents(Paths.get(System.getProperty(AppConfig.JAVA_TMP),
-                                                 (currentRepo != null ? currentRepo.getEncFileName() + AppConfig.PARTS_SUFFIX : "unknown")));
+                                                 (currentRepo != null ? currentRepo.getEncFileName()
+                                                  + AppConfig.PARTS_SUFFIX : "unknown")));
             LOGGER.finest("Deleting enc tmp directory");
         } catch (Exception e) {
             LOGGER.warning("Could not delete enc tmp directory");
@@ -185,14 +163,20 @@ public final class FileUtils {
 
         try {
             deleteDirectoryAndContents(Paths.get(System.getProperty(AppConfig.JAVA_TMP),
-                                                 (currentRepo != null ? AppConfig.TMP_PREFIX + currentRepo.getRepoName() : "unknown")));
+                                                 (currentRepo != null ? AppConfig.TMP_PREFIX
+                                                  + currentRepo.getRepoName() : "unknown")));
             LOGGER.finest("Deleting tmp directory");
         } catch (Exception e) {
             LOGGER.warning("Could not delete tmp directory");
         }
     }
 
-    private void deleteFile(String fileName) throws IOException {
+    /**
+     * Deletes a specific file by its name in the system's temporary directory.
+     * @param fileName the name of the file to delete.
+     * @throws IOException if an I/O error occurs.
+     */
+    private void deleteFile(final String fileName) throws IOException {
         if (fileName != null) {
             Path path = Paths.get(System.getProperty(AppConfig.JAVA_TMP), fileName);
             if (Files.exists(path)) {
@@ -203,6 +187,11 @@ public final class FileUtils {
         }
     }
 
+    /**
+     * Deletes a directory and all of its contents.
+     * @param directoryPath the path to the directory to delete.
+     * @throws IOException if an I/O error occurs.
+     */
     private void deleteDirectoryAndContents(final Path directoryPath) throws IOException {
         if (directoryPath != null && Files.exists(directoryPath)) {
             Files.walk(directoryPath)

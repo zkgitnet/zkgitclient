@@ -1,7 +1,6 @@
 package se.miun.dt133g.zkgitclient.commands.account;
 
 import se.miun.dt133g.zkgitclient.commands.Command;
-import se.miun.dt133g.zkgitclient.commands.login.BaseCommandLogin;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionHandler;
 import se.miun.dt133g.zkgitclient.crypto.EncryptionFactory;
 import se.miun.dt133g.zkgitclient.crypto.GenerateEncryptionKeys;
@@ -18,6 +17,13 @@ import java.util.Optional;
 import java.util.logging.Logger;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Command to request creation of a new user account on the server.
+ * This class handles generating encryption keys (RSA, AES), encrypting
+ * sensitive data, and sending a user creation request to the server.
+ * The user receives a username and TOTP secret for two-factor authentication.
+ * @author Leif Rogell
+ */
 public final class RequestNewUser extends BaseCommandAccount implements Command {
 
     private GenerateEncryptionKeys genEncKeys = new GenerateEncryptionKeys();
@@ -35,6 +41,10 @@ public final class RequestNewUser extends BaseCommandAccount implements Command 
     private int[] salt;
     private int[] iv;
 
+    /**
+     * Executes the user creation process if connected and credentials are valid.
+     * @return JSON response string from the server indicating success or failure.
+     */
     @Override
     public String execute() {
         return Optional.of(conn.getServerConnectivity())
@@ -43,12 +53,19 @@ public final class RequestNewUser extends BaseCommandAccount implements Command 
             .orElseGet(() -> createErrorResponse(ERROR_MESSAGE));
     }
 
+    /**
+     * Handles the entire process of generating keys, reading password,
+     * encrypting keys, and sending the user creation request.
+     * @return JSON response from the server.
+     */
     private String handleUserCreation() {
         try {
             generateKeys();
 
             String encAesKey = encryptAesKey(credentials.getAesKeyJson());
-            newPassword = readPassword(AppConfig.INFO_ENTER_PASSWORD, AppConfig.INFO_INVALID_PASSWORD, AppConfig.REGEX_PASSWORD);
+            newPassword = readPassword(AppConfig.INFO_ENTER_PASSWORD,
+                                       AppConfig.INFO_INVALID_PASSWORD,
+                                       AppConfig.REGEX_PASSWORD);
             System.out.println("New Password: " + newPassword);
             String encPrivRsa = encryptPrivateKey(newPassword);
             String postResponse = sendCreateUserRequest(encAesKey, encPrivRsa);
@@ -56,7 +73,8 @@ public final class RequestNewUser extends BaseCommandAccount implements Command 
 
             if (postResponseMap.containsKey(AppConfig.COMMAND_SUCCESS)) {
                 System.out.println("\nNew Username: " + postResponseMap.get(AppConfig.CREDENTIAL_NEW_USERNAME));
-                System.out.println("TOTP Secret: " + utils.formatWithSpace(postResponseMap.get(AppConfig.CREDENTIAL_NEW_TOTP_SECRET)));
+                System.out.println("TOTP Secret: "
+                                   + utils.formatWithSpace(postResponseMap.get(AppConfig.CREDENTIAL_NEW_TOTP_SECRET)));
                 System.out.println("\nHand this information together with the initial password to the new user.\n");
             }
 
@@ -68,20 +86,29 @@ public final class RequestNewUser extends BaseCommandAccount implements Command 
         }
     }
 
+    /**
+     * Generates the RSA key pair, AES IV, salt, and TOTP secret for the new user.
+     * @throws Exception if key generation fails.
+     */
     private void generateKeys() throws Exception {
         System.out.println(AppConfig.STATUS_GENERATING_KEYS);
         privRsaKey = genEncKeys.generatePrivateRsaJwk();
         System.out.println("newPrivRsaKey: " + privRsaKey);
-        
+
         pubRsaKey = genEncKeys.generatePublicRsaJwk();
         System.out.println("newPubRsaKey: " + pubRsaKey);
-        
+
         salt = genEncKeys.generateSalt();
         iv = genEncKeys.generateIv();
         totpSecret = genEncKeys.generateTotpSecret();
         System.out.println("newTotpSecret: " + totpSecret);
     }
 
+    /**
+     * Encrypts the current AES key using the newly generated RSA public key.
+     * @param aesKeyJson AES key in JSON format.
+     * @return Base64-encoded encrypted AES key.
+     */
     private String encryptAesKey(final String aesKeyJson) {
         rsaHandler.setRsaKey(pubRsaKey);
         rsaHandler.setInput(aesKeyJson);
@@ -89,7 +116,12 @@ public final class RequestNewUser extends BaseCommandAccount implements Command 
         return rsaHandler.getOutput();
     }
 
-    private String encryptPrivateKey(String newPassword) {
+    /**
+     * Encrypts the generated RSA private key using the provided password.
+     * @param newPassword Password entered by the administrator.
+     * @return String representing salt, IV, and encrypted private key.
+     */
+    private String encryptPrivateKey(final String newPassword) {
         String saltString = utils.formatIntArray("salt", salt);
         String ivString = utils.formatIntArray("iv", iv);
 
@@ -98,7 +130,7 @@ public final class RequestNewUser extends BaseCommandAccount implements Command 
 
         credentials.setSalt(saltJsonObject.getJSONArray("salt"));
         //credentials.setPassword("testtesttest1".toCharArray());
-        //credentials.setPassword(); 
+        //credentials.setPassword();
         pbkdf2Handler.encrypt();
         byte[] passwordHash = credentials.getPbkdf2Hash();
 
@@ -111,6 +143,12 @@ public final class RequestNewUser extends BaseCommandAccount implements Command 
         return saltString + ";" + ivString + ";\"ciphertext\":\"" + aesHandler.getOutput() + "\"";
     }
 
+    /**
+     * Sends the encrypted user data to the server to create a new user account.
+     * @param encAesKey  The AES key encrypted with RSA.
+     * @param encPrivRsa The private RSA key encrypted with AES.
+     * @return JSON response from the server.
+     */
     private String sendCreateUserRequest(final String encAesKey, final String encPrivRsa) {
         System.out.println(AppConfig.STATUS_CREATING_USER);
         Map<String, String> postData = new HashMap<>();
@@ -126,6 +164,11 @@ public final class RequestNewUser extends BaseCommandAccount implements Command 
         return conn.sendPostRequest(postData);
     }
 
+    /**
+     * Encodes the input string in Base64 URL format without padding.
+     * @param input The input string to encode.
+     * @return Encoded Base64 URL-safe string.
+     */
     private String base64UrlEncode(final String input) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(input.getBytes(StandardCharsets.UTF_8));
     }

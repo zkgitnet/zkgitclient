@@ -2,6 +2,14 @@ package se.miun.dt133g.zkgitclient.support;
 
 import java.util.logging.Level;
 
+/**
+ * The {@code AppConfig} class contains various constant values used throughout the application.
+ * It provides configurations for logging, server connections, paths, commands, cryptographic settings,
+ * user credentials, database fields, status messages, input validation, and error handling.
+ * This class is designed to be a utility class and cannot be instantiated.
+ * All fields are {@code public static final}, ensuring that they are constants that can be accessed globally.
+ * @author Leif Rogell
+ */
 public final class AppConfig {
 
     private AppConfig() {
@@ -13,7 +21,7 @@ public final class AppConfig {
 
     // Server & connection configuration
     public static final String DOMAIN_PREFIX = "https://";
-    
+
     public static final String API_DOMAIN = "api.zkgit.net";
 
     public static final String API_PORT = "11443";
@@ -23,10 +31,12 @@ public final class AppConfig {
     public static final String CONTENT_TYPE_TEXT_HTML = "text/html";
 
     public static final String REQUEST_TYPE_POST = "POST";
-    
+
     public static final String REQUEST_TYPE_GET = "GET";
 
     public static final String REQUEST_POST_END = "\r\n";
+
+    public static final int HTTP_PORT = 80;
 
     public static final int GIT_PORT = 10101;
 
@@ -36,7 +46,8 @@ public final class AppConfig {
 
     public static final String CONTENT_DISPOSITION_NAME = "Content-Disposition: form-data; name=\"";
 
-    public static final String CONTENT_DISPOSITION_FILENAME = "Content-Disposition: form-data; name=\"file\"; filename=\"";
+    public static final String CONTENT_DISPOSITION_FILENAME = "Content-Disposition: form-data; "
+        + "name=\"file\"; filename=\"";
 
     public static final String CONTENT_TYPE_MULTIPART = "multipart/form-data; boundary=";
 
@@ -65,7 +76,7 @@ public final class AppConfig {
     public static final String COMMAND_SUCCESS = "SUCCESS";
 
     public static final String COMMAND_EXIT = "EXIT";
-    
+
     public static final String COMMAND_GET_TOTP = "GET_TOTP";
 
     public static final String COMMAND_REQUEST_LOGIN = "LOGIN";
@@ -120,17 +131,21 @@ public final class AppConfig {
 
     public static final String REPO_NAME_HASH = "REPO_NAME_HASH";
 
-    public static final String NUM_CHUNKS = "NUM_CHUNKS";
-
-    public static final int CHUNK_SIZE = 1048576; // 1 MB = 1024 * 1024 KB
-
     public static final int ONE_KB = 1024;
+
+    public static final int FOUR_KB = 4096;
+
+    public static final int SIXFIVE_KB = 65536;
+
+    public static final int TIMEOUT_LIMIT = 5000;
+
+    public static final int READ_TIMEOUT_LIMIT = 1200000;
 
     public static final String FILE_READ_MODE = "r";
 
     public static final int NUM_RETRIES = 5;
 
-    public static final String FILE_SHA256_HASH= "fileHash";
+    public static final String FILE_SHA256_HASH = "fileHash";
 
     public static final String REPO_SIGNATURE = "commithash";
 
@@ -233,7 +248,7 @@ public final class AppConfig {
     public static final int CRYPTO_IV_LENGTH = 12;
 
     public static final String CRYPTO_BASE32_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-    
+
     public static final int CRYPTO_TOTP_SECRET_LENGTH = 24;
 
     public static final String CRYPTO_SHA_512 = "SHA-512";
@@ -264,7 +279,7 @@ public final class AppConfig {
     public static final String STATUS_GENERATING_KEYS = "Generating new encryption keys...";
 
     public static final String STATUS_CREATING_USER = "Creating user on server...";
-    
+
     public static final String STATUS_LOGGED_IN = "Logged in";
 
     public static final String STATUS_REPO_UPTODATE = "upToDate";
@@ -282,7 +297,8 @@ public final class AppConfig {
     // Info messages & Input config
     public static final String INFO_ENTER_ACCOUNT_NUMBER = "Enter account number (25 digits) or '0' to exit: ";
 
-    public static final String INFO_INVALID_ACCOUNT_NUMBER_INPUT = "Invalid account number. It must be exactly 25 digits.";
+    public static final String INFO_INVALID_ACCOUNT_NUMBER_INPUT = "Invalid account number. "
+        + "It must be exactly 25 digits.";
 
     public static final String INFO_ENTER_TOTP = "Enter 2FA Token (6 digits) or '0' to exit: ";
 
@@ -294,15 +310,19 @@ public final class AppConfig {
 
     public static final String INFO_ENTER_PORT_NUMBER = "Enter the port number (0 to exit): ";
 
-    public static final String INFO_INVALID_PORT_NUMBER = "Invalid port number. Please enter a number between 1 and 65535.";
+    public static final String INFO_INVALID_PORT_NUMBER = "Invalid port number. Please enter "
+        + "a number between 1 and 65535.";
 
-    public static final String INFO_INVALID_USERNAME = "Invalid username. It cannot be empty or longer than 50 characters. Usernames consists of only characters.";
+    public static final String INFO_INVALID_USERNAME = "Invalid username. It cannot be empty or longer "
+        + "than 50 characters. Usernames consists of only characters.";
 
-    public static final String INFO_INVALID_REPONAME = "Invalid reponame. It cannot be empty or longer than 250 characters. Reponames consists of only characters and digits.";
+    public static final String INFO_INVALID_REPONAME = "Invalid reponame. It cannot be empty or longer "
+        + "than 250 characters. Reponames consists of only characters and digits.";
 
     public static final String INFO_ENTER_PASSWORD = "Enter password or '0' to exit: ";
 
-    public static final String INFO_INVALID_PASSWORD = "Invalid password. It is between 12 and 30 characters, and consists of letters, digits and special characters.";
+    public static final String INFO_INVALID_PASSWORD = "Invalid password. It is between 12 and 30 "
+        + "characters, and consists of letters, digits and special characters.";
 
     public static final String INFO_FILE_SAVED = "File saved to: ";
 
@@ -337,7 +357,8 @@ public final class AppConfig {
 
     public static final String ERROR_INVALID_PORT = "Invalid input. Please enter a valid integer.";
 
-    public static final String ERROR_NO_FREE_PORT = "Git port already occupied. Either another application is using the same port or another instance of ZK Git is already running." + System.lineSeparator();
+    public static final String ERROR_NO_FREE_PORT = "Git port already occupied. Either another application "
+        + "is using the same port or another instance of ZK Git is already running." + System.lineSeparator();
 
     public static final String ERROR_SOCKET_INTERRUPT = "Git connection was interrupted. Please restart the client.";
 
@@ -423,8 +444,6 @@ public final class AppConfig {
     public static final String HASH = "#";
 
     public static final int MB = 1048576;
-
-    public static final int FOUR_KB = 4096;
 
     public static final int ONE_SECOND = 1000;
 

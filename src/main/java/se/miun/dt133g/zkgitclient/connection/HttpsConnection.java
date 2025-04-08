@@ -9,16 +9,10 @@ import se.miun.dt133g.zkgitclient.support.AppConfig;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import java.net.URL;
 import java.net.URLConnection;
@@ -32,8 +26,12 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.net.ssl.HostnameVerifier;
 
+/**
+ * Provides methods for handling HTTPS connections, including sending GET/POST requests, uploading files,
+ * and handling encryption and signature for the data.
+ * @author Leif Rogell
+ */
 public final class HttpsConnection {
 
     private EncryptionHandler rsaSignHandler =
@@ -44,7 +42,14 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
     private UserCredentials credentials = UserCredentials.getInstance();
     private CurrentUserRepo currentRepo = CurrentUserRepo.getInstance();
     private String uriPath = AppConfig.URI_PATH;
-    
+
+    /**
+     * Sends a POST request with the provided parameters and returns the server response as an InputStream.
+     * @param domain the target server domain.
+     * @param port the server port.
+     * @param postDataParams the parameters to include in the POST request body.
+     * @return the server response InputStream.
+     */
     protected InputStream sendGetPostRequest(final String domain,
                                              final String port,
                                              final Map<String, String> postDataParams) {
@@ -56,8 +61,8 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
                                              + port
                                              + uriPath).openConnection();
             connection.setRequestMethod(AppConfig.REQUEST_TYPE_POST);
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
+            connection.setConnectTimeout(AppConfig.TIMEOUT_LIMIT);
+            connection.setReadTimeout(AppConfig.TIMEOUT_LIMIT);
             connection.setDoOutput(true);
 
             try (DataOutputStream wr =
@@ -95,6 +100,13 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
         }
     }
 
+    /**
+     * Sends a POST request with the provided parameters and returns the server response as a String.
+     * @param domain the target server domain.
+     * @param port the server port.
+     * @param postDataParams the parameters to include in the POST request body.
+     * @return the server response as a String.
+     */
     protected String sendPostRequest(final String domain,
                                      final String port,
                                      final Map<String, String> postDataParams) {
@@ -107,8 +119,8 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
                                              + uriPath).openConnection();
             LOGGER.config("https://" + domain + ":" + port + uriPath);
             connection.setRequestMethod(AppConfig.REQUEST_TYPE_POST);
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
+            connection.setConnectTimeout(AppConfig.TIMEOUT_LIMIT);
+            connection.setReadTimeout(AppConfig.TIMEOUT_LIMIT);
             connection.setDoOutput(true);
 
             try (DataOutputStream wr =
@@ -139,6 +151,15 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
         }
     }
 
+    /**
+     * Sends a POST request with file data and additional parameters, returning the server response as a String.
+     * @param domain the target server domain.
+     * @param port the server port.
+     * @param fileInputStream the InputStream of the file to upload.
+     * @param fileName the name of the file being uploaded.
+     * @param postParamData additional parameters for the POST request.
+     * @return the server response as a String.
+     */
     protected String sendFilePostRequest(final String domain,
                                          final String port,
                                          final InputStream fileInputStream,
@@ -152,41 +173,40 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
             HttpsURLConnection connection =
                 (HttpsURLConnection) new URL("https://" + domain + ":" + port + uriPath).openConnection();
             connection.setRequestMethod(AppConfig.REQUEST_TYPE_POST);
-            connection.setConnectTimeout(10000);
-            connection.setReadTimeout(1200000);
+            connection.setConnectTimeout(AppConfig.TIMEOUT_LIMIT);
+            connection.setReadTimeout(AppConfig.READ_TIMEOUT_LIMIT);
             connection.setDoOutput(true);
-            connection.setChunkedStreamingMode(65536); // Enable chunked mode for large file uploads
+            connection.setChunkedStreamingMode(AppConfig.SIXFIVE_KB);
             connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
             try (BufferedOutputStream request = new BufferedOutputStream(connection.getOutputStream());
-                 BufferedInputStream bufferedFileStream = new BufferedInputStream(fileInputStream, 65536)) {
+                 BufferedInputStream bufferedFileStream = new BufferedInputStream(fileInputStream,
+                                                                                  AppConfig.SIXFIVE_KB)) {
 
-                // Add form fields
                 String postParamsString = buildPostParamsString(postParamData, boundary, LINE_FEED);
                 LOGGER.finest(postParamsString);
                 request.write(postParamsString.getBytes(StandardCharsets.UTF_8));
 
-                // Add file data
-                request.write(("--" + boundary + LINE_FEED +
-                               "Content-Disposition: form-data; name=\"file\"; filename=\"" + fileName + "\"" + LINE_FEED +
-                               "Content-Type: " + URLConnection.guessContentTypeFromName(fileName) + LINE_FEED +
-                               "Content-Transfer-Encoding: binary" + LINE_FEED + LINE_FEED)
+                request.write(("--" + boundary + LINE_FEED
+                               + "Content-Disposition: form-data; name=\"file\"; filename=\""
+                               + fileName + "\"" + LINE_FEED
+                               + "Content-Type: " + URLConnection.guessContentTypeFromName(fileName) + LINE_FEED
+                               + "Content-Transfer-Encoding: binary" + LINE_FEED + LINE_FEED)
                               .getBytes(StandardCharsets.UTF_8));
 
-                // Stream file data
-                byte[] buffer = new byte[65536];
+                byte[] buffer = new byte[AppConfig.SIXFIVE_KB];
                 int bytesRead;
+                int totBytes = 0;
                 while ((bytesRead = bufferedFileStream.read(buffer)) != -1) {
-                    //LOGGER.finest("Transferred bytes of data: " + bytesRead);
                     request.write(buffer, 0, bytesRead);
+                    totBytes += bytesRead;
                 }
+                LOGGER.fine("Total Bytes: " + totBytes);
 
-                // End of multipart/form-data
                 request.write((LINE_FEED + "--" + boundary + "--" + LINE_FEED).getBytes(StandardCharsets.UTF_8));
                 request.flush();
             }
 
-            // Handle response
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpsURLConnection.HTTP_OK) {
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
@@ -201,9 +221,16 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
         }
     }
 
-
-
-    private String buildPostParamsString(Map<String, String> postParamDataInput, String boundary, String lineFeed) {
+    /**
+     * Builds the body for the POST request containing form data parameters and encrypted signature.
+     * @param postParamDataInput the parameters to include in the POST body.
+     * @param boundary the boundary for multipart form-data.
+     * @param lineFeed the line feed character for formatting.
+     * @return the formatted POST data as a String.
+     */
+    private String buildPostParamsString(final Map<String, String> postParamDataInput,
+                                         final String boundary,
+                                         final String lineFeed) {
         StringBuilder postDataBuilder = new StringBuilder();
         StringBuilder messageBuilder = new StringBuilder();
 
@@ -226,13 +253,12 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
                 .append(entry.getValue())
                 .append(lineFeed);
 
-            if (messageBuilder.length()> 0) {
+            if (messageBuilder.length() > 0) {
                 messageBuilder.append("&");
             }
             messageBuilder.append(entry.getKey())
                 .append("=")
                 .append(entry.getValue());
-                                            
         }
 
         sha256Handler.setInput(messageBuilder.toString());
@@ -264,13 +290,13 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
             }
-                
+
             if (privRsa != null && !privRsa.equals("")) {
                 rsaSignHandler.setRsaKey(privRsa);
                 rsaSignHandler.setInput(hash);
                 rsaSignHandler.encrypt();
                 String signedHash = rsaSignHandler.getOutput();
-        
+
                 if (!signedHash.contains("argument")) {
                     postDataBuilder.append("--")
                         .append(boundary)
@@ -284,7 +310,7 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
                         .append(lineFeed)
                         .append(signedHash)
                         .append(lineFeed);
-                    
+
                     messageBuilder.append("&"
                                            + "signature"
                                            + "="
@@ -292,16 +318,16 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
                 }
             }
         }
-        
-        //System.out.println(postDataBuilder.toString());
-                    
-        //System.out.println(messageBuilder.toString());
 
         return postDataBuilder.toString();
     }
 
-
-    private String buildPostData(Map<String, String> postDataParams) {
+    /**
+     * Builds the POST data string, including parameters and encrypted signature.
+     * @param postDataParams the parameters to include in the POST data.
+     * @return the formatted POST data string.
+     */
+    private String buildPostData(final Map<String, String> postDataParams) {
 
         String postDataString = postDataParams.entrySet().stream()
             .map(entry -> entry.getKey() + "=" + entry.getValue())
@@ -324,18 +350,18 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
                                          + "="
                                          + hash);
         }
-        
+
         String privRsa = null;
         try {
             privRsa = credentials.getPrivRsa();
         } catch (Exception e) { }
-                
+
         if (privRsa != null && !privRsa.equals("")) {
             rsaSignHandler.setRsaKey(privRsa);
             rsaSignHandler.setInput(hash);
             rsaSignHandler.encrypt();
             String signedHash = rsaSignHandler.getOutput();
-        
+
             if (!signedHash.contains("argument")) {
                 postDataStringBuilder.append("&"
                                              + "signature"
@@ -344,20 +370,25 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
             }
         }
 
-        //System.out.println("\n" + postDataStringBuilder.toString() + "\n");
-                                     
         return postDataStringBuilder.toString();
     }
 
+    /**
+     * Configures the connection to trust all certificates, bypassing SSL verification.
+     */
     private void trustAllCertificates() {
         try {
-            TrustManager[] trustAllCerts = { new X509TrustManager() {
-                    public X509Certificate[] getAcceptedIssuers() { return null; }
+            TrustManager[] trustAllCerts = {
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
                     public void checkClientTrusted(final X509Certificate[] certs,
-                                                   final String authType) {}
+                                                   final String authType) { }
                     public void checkServerTrusted(final X509Certificate[] certs,
-                                                   final String authType) {}
-                }};
+                                                   final String authType) { }
+                }
+            };
             SSLContext sc = SSLContext.getInstance(AppConfig.CRYPTO_SSL);
             sc.init(null, trustAllCerts, new java.security.SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
