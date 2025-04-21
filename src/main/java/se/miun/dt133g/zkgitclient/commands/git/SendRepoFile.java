@@ -6,6 +6,7 @@ import se.miun.dt133g.zkgitclient.commands.Command;
 import se.miun.dt133g.zkgitclient.logger.ZkGitLogger;
 import se.miun.dt133g.zkgitclient.support.AppConfig;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
@@ -54,6 +55,8 @@ public final class SendRepoFile extends BaseCommandGit implements Command {
                                  sha256Handler.getOutput());
                     postData.put(AppConfig.REPO_SIGNATURE,
                                  currentRepo.getRepoSignature());
+                    postData.put(AppConfig.DB_IV,
+                                 Arrays.toString(utils.byteArrayToIntArray(credentials.getIv())));
 
                     return performFileEncryption(System.getProperty(AppConfig.JAVA_TMP)
                                                  + "/" + AppConfig.TMP_PREFIX

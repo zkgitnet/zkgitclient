@@ -42,19 +42,22 @@ public final class GetRepoFile extends BaseCommandGit implements Command {
         LOGGER.finest("Current Signature: " + currentRepo.getRepoSignature());
         LOGGER.finest(infoResponse.get(AppConfig.DB_IV));
 
-
-        if (infoResponse.get(AppConfig.DB_IV) == null) {
-            ivHandler.encrypt();
-            credentials.setIv(ivHandler.getOutput());
-            responseMap.put(AppConfig.COMMAND_SUCCESS, AppConfig.STATUS_REPO_NEW);
-            return utils.mapToString(responseMap);
-        } else if (currentRepo.getRepoSignature().contains(infoResponse.get(AppConfig.DB_REPO_HASH))) {
-            responseMap.put(AppConfig.COMMAND_SUCCESS, AppConfig.STATUS_REPO_UPTODATE);
-            return utils.mapToString(responseMap);
-
-        } else {
-            currentRepo.setRepoSignature(infoResponse.get(AppConfig.DB_REPO_HASH));
-            credentials.setIv(infoResponse.get(AppConfig.DB_IV));
+        try {
+            if (currentRepo.getRepoSignature().contains(infoResponse.get(AppConfig.DB_REPO_HASH))) {
+                responseMap.put(AppConfig.COMMAND_SUCCESS, AppConfig.STATUS_REPO_UPTODATE);
+                return utils.mapToString(responseMap);
+            } else if (infoResponse.get(AppConfig.DB_IV) == null) {
+                ivHandler.encrypt();
+                credentials.setIv(ivHandler.getOutput());
+                responseMap.put(AppConfig.COMMAND_SUCCESS, AppConfig.STATUS_REPO_NEW);
+                return utils.mapToString(responseMap);
+            } else {
+                currentRepo.setRepoSignature(infoResponse.get(AppConfig.DB_REPO_HASH));
+                credentials.setIv(infoResponse.get(AppConfig.DB_IV));
+            }
+        } catch (NullPointerException e) {
+            LOGGER.severe("Could not retrieve repo info from remote");
+            return AppConfig.NONE;
         }
 
         sha256Handler.setInput(currentRepo.getRepoName()
