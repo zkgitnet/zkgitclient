@@ -111,7 +111,7 @@ public final class Utils {
      */
     public byte[] ivArrayToByteArray(final String ivArray) throws NumberFormatException {
         String input = ivArray.replaceAll("[\\[\\] ]", "");
-        String[] byteStrings = input.split(";");
+        String[] byteStrings = input.split("[;,]");
         byte[] byteArray = new byte[byteStrings.length];
 
         for (int i = 0; i < byteStrings.length; i++) {

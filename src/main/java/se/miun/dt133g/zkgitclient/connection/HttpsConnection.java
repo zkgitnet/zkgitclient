@@ -138,13 +138,13 @@ EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_RSA_SIGNATURE);
                     return in.lines().collect(Collectors.joining());
                 }
             } else {
-                LOGGER.severe("sendPostRequest Error");
+                LOGGER.severe("sendPostRequest Error: " + connection.getResponseCode());
                 return "{" + AppConfig.ERROR_KEY
                     + "="
                     + connection.getResponseCode() + "}";
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            LOGGER.severe(e.getMessage());
             return "{" + AppConfig.ERROR_KEY
                     + "="
                     + AppConfig.ERROR_CONNECTION + "}";

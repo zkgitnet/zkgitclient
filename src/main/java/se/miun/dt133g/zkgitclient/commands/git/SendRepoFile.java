@@ -36,7 +36,12 @@ public final class SendRepoFile extends BaseCommandGit implements Command {
         return Optional.of(conn.getServerConnectivity())
             .filter(valid -> credentials.hasAccessToken())
             .map(valid -> {
+                    ivHandler.encrypt();
+                    credentials.setIv(ivHandler.getOutput());
 
+                    aesHandler.setIv(credentials.getIv());
+                    aesHandler.setInput(currentRepo.getRepoName());
+                    aesHandler.encrypt();
                     sha256Handler.setInput(currentRepo.getRepoName());
                     sha256Handler.encrypt();
 
@@ -52,6 +57,8 @@ public final class SendRepoFile extends BaseCommandGit implements Command {
                     postData.put(AppConfig.CREDENTIAL_ACCESS_TOKEN,
                                  credentials.getAccessToken());
                     postData.put(AppConfig.ENC_FILE_NAME,
+                                 aesHandler.getOutput());
+                    postData.put(AppConfig.DB_REPO_NAME_HASH,
                                  sha256Handler.getOutput());
                     postData.put(AppConfig.REPO_SIGNATURE,
                                  currentRepo.getRepoSignature());

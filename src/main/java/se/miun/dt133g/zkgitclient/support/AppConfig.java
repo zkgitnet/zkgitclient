@@ -210,6 +210,8 @@ public final class AppConfig {
 
     public static final String DB_REPO_HASH = "commithash";
 
+    public static final String DB_REPO_NAME_HASH = "reponamehash";
+
     // Crypto
     public static final String CRYPTO_PBKDF2_METHOD = "PBKDF2WithHmacSHA512";
 

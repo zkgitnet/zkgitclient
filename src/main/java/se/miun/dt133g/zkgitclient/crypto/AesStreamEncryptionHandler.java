@@ -32,6 +32,7 @@ public final class AesStreamEncryptionHandler implements StreamEncryptionHandler
     private final Logger LOGGER = ZkGitLogger.getLogger(this.getClass());
 
     private CurrentUserRepo currentRepo = CurrentUserRepo.getInstance();
+    private EncryptionHandler ivHandler = EncryptionFactory.getEncryptionHandler(AppConfig.CRYPTO_IV);
     private byte[] aesKey;
     private byte[] iv;
 
@@ -55,6 +56,7 @@ public final class AesStreamEncryptionHandler implements StreamEncryptionHandler
      * Encrypts the input stream and writes the result to the output stream.
      * This method reads data from the input stream, encrypts it using AES GCM, and writes the encrypted data
      * to the output stream.
+     * The method generates a new random IV for each encryption process.
      * @param inputStream the input stream to be encrypted.
      * @param outputStream the output stream to write the encrypted data.
      */

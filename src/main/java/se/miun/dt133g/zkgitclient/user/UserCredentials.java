@@ -137,6 +137,7 @@ public final class UserCredentials {
      * @param ivArray the IV as a string representation.
      */
     public void setIv(final String ivArray) {
+        LOGGER.finest(ivArray);
         JSONArray jsonArray = new JSONArray(ivArray.replace(";", ","));
         setIv(jsonArray);
     }
